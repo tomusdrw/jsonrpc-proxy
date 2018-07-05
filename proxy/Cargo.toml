@@ -1,0 +1,7 @@
+[package]
+name = "proxy"
+version = "0.1.0"
+authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
+
+[dependencies]
+jsonrpc-core = { git="https://github.com/paritytech/jsonrpc.git" }
