@@ -4,4 +4,9 @@ version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 
 [dependencies]
-jsonrpc-core = { git="https://github.com/paritytech/jsonrpc.git" }
+jsonrpc-core = { git="https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware" }
+jsonrpc-pubsub = { git="https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware" }
+log = "0.4"
+tokio-core = "0.1"
+websocket = { version = "0.20", default-features = false, features = ["async"] }
+serde_json = "1.0"

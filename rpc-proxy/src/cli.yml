@@ -1,0 +1,7 @@
+name: rpc-proxy
+version: "0.1"
+about: Generic RPC proxy, featuring caching and load balancing.
+author: Parity Technologies Ltd <admin@parity.io>
+
+# settings:
+#     - ArgRequiredElseHelp

@@ -1,3 +1,7 @@
+#![warn(missing_docs)]
+
+extern crate clap;
+
 #[cfg(test)]
 mod tests {
     #[test]
