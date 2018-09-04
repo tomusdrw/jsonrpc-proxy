@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
-    sync::Arc
+    sync::Arc,
+    time,
 };
 use fnv::FnvHashMap;
 use rpc::{
@@ -18,7 +19,21 @@ type Hash = String;
 #[derive(Debug)]
 pub enum ParamsCache {
     /// Parameters for the method doesn't matter. Cache only by method name.
-    IgnoreParams
+    IgnoreParams,
+}
+
+/// Cache eviction policy
+#[derive(Debug)]
+pub enum CacheEviction {
+    /// Time-based caching. The cache entry is discarded after given amount of time.
+    Time(time::Duration),
+    // TODO [ToDr] notification (via subscription)
+}
+
+/// Method metadata
+#[derive(Debug)]
+enum MethodMeta {
+    Deadline(time::Instant),
 }
 
 /// Represents a cacheable method.
@@ -29,26 +44,42 @@ pub enum ParamsCache {
 pub struct Method {
     name: String,
     params: ParamsCache,
+    eviction: CacheEviction,
 }
 
 impl Method {
     /// Create new method.
-    pub fn new<T: Into<String>>(name: T, params: ParamsCache) -> Self {
+    pub fn new<T: Into<String>>(name: T, params: ParamsCache, eviction: CacheEviction) -> Self {
         Method {
             name: name.into(),
             params,
+            eviction,
         }
     }
 
     /// Ignore parameters when caching.
     pub fn ignore_params<T: Into<String>>(name: T) -> Self {
-        Self::new(name, ParamsCache::IgnoreParams)
+        Self::new(name, ParamsCache::IgnoreParams, CacheEviction::Time(time::Duration::from_secs(5)))
     }
 
     /// Returns a hash of parameters of this method.
-    pub fn hash(&self, _parameters: &Option<rpc::Params>) -> Hash {
+    fn hash(&self, _parameters: &Option<rpc::Params>) -> Hash {
         // TODO [ToDr] Should take parameters into account
         self.name.clone()
+    }
+
+    /// Generates metadata that should be stored in the cache together with the value.
+    fn meta(&self) -> MethodMeta {
+        match self.eviction {
+            CacheEviction::Time(duration) => MethodMeta::Deadline(time::Instant::now() + duration),
+        }
+    }
+
+    /// Determines if the cached result is still ok to use.
+    fn is_fresh(&self, meta: &MethodMeta) -> bool {
+        match *meta {
+            MethodMeta::Deadline(deadline) => time::Instant::now() < deadline,
+        }
     }
 }
 
@@ -59,11 +90,17 @@ impl Method {
 #[derive(Debug)]
 pub struct Middleware {
     cacheable: FnvHashMap<String, Method>,
-    cached: Arc<RwLock<HashMap<Hash, Option<rpc::Output>, ::twox_hash::RandomXxHashBuilder>>>,
+    cached: Arc<RwLock<HashMap<
+        Hash, 
+        (Option<rpc::Output>, MethodMeta),
+        ::twox_hash::RandomXxHashBuilder
+    >>>,
 }
 
 impl Middleware {
     /// Creates new caching middleware given cacheable methods definitions.
+    ///
+    /// TODO [ToDr] Cache limits
     pub fn new(methods: Vec<Method>) -> Self {
         Middleware {
             cacheable: methods.into_iter().map(|x| (x.name.clone(), x)).collect(),
@@ -86,7 +123,7 @@ impl rpc::Middleware<Metadata> for Middleware {
     {
         enum Action {
             Next,
-            NextAndCache(Hash),
+            NextAndCache(Hash, MethodMeta),
             Return(Option<rpc::Output>),
         }
 
@@ -94,10 +131,14 @@ impl rpc::Middleware<Metadata> for Middleware {
             rpc::Call::MethodCall(rpc::MethodCall { ref method, ref params, .. }) => {
                 if let Some(method) = self.cacheable.get(method) {
                     let hash = method.hash(params);
-                    if let Some(result) = self.cached.read().get(&hash) {
-                        Action::Return(result.clone())
+                    if let Some((result, meta)) = self.cached.read().get(&hash) {
+                        if method.is_fresh(meta) {
+                            Action::Return(result.clone())
+                        } else {
+                            Action::NextAndCache(hash, method.meta())
+                        }
                     } else {
-                        Action::NextAndCache(hash)
+                        Action::NextAndCache(hash, method.meta())
                     }
                 } else {
                     Action::Next
@@ -109,12 +150,15 @@ impl rpc::Middleware<Metadata> for Middleware {
         match action {
             // Fallback
             Action::Next => Either::B(next(call, meta)),
-            Action::NextAndCache(hash) => {
+            Action::NextAndCache(hash, method_meta) => {
                 let cached = self.cached.clone();
                 Either::A(Either::A(Box::new(
                     next(call, meta)
                         .map(move |result| {
-                            cached.write().insert(hash, result.clone());
+                            cached.write().insert(hash, (
+                                result.clone(),
+                                method_meta
+                            ));
                             result
                         })
                 )))
