@@ -1,16 +1,25 @@
+#![warn(missing_docs)]
+#![warn(unused_extern_crates)]
+
+extern crate fnv;
+extern crate jsonrpc_core as rpc;
+extern crate jsonrpc_pubsub as pubsub;
+extern crate parking_lot;
+extern crate serde_json;
+extern crate twox_hash;
+
+#[macro_use]
+extern crate log;
+
 use std::{
     collections::HashMap,
     sync::Arc,
 };
 
-use pubsub;
 use rpc::{
-    self,
     futures::Future,
     futures::future::Either,
 };
-
-use super::Metadata;
 
 mod helpers;
 pub mod ws;
@@ -77,12 +86,15 @@ impl<T> Middleware<T> {
     }
 }
 
-impl<T: Transport + 'static> rpc::Middleware<Metadata> for Middleware<T> {
+impl<T, M> rpc::Middleware<M> for Middleware<T> where
+    T: Transport + 'static,
+    M: rpc::Metadata + Into<Option<Arc<pubsub::Session>>>,
+{
     type Future = rpc::middleware::NoopFuture;
     type CallFuture = rpc::middleware::NoopCallFuture;
 
-    fn on_call<F, X>(&self, request: rpc::Call, meta: Metadata, _next: F) -> Either<Self::CallFuture, X> where
-        F: FnOnce(rpc::Call, Metadata) -> X + Send,
+    fn on_call<F, X>(&self, request: rpc::Call, meta: M, _next: F) -> Either<Self::CallFuture, X> where
+        F: FnOnce(rpc::Call, M) -> X + Send,
         X: Future<Item = Option<rpc::Output>, Error = ()> + Send + 'static, 
     {
         let (subscribe, unsubscribe) = {
@@ -99,7 +111,7 @@ impl<T: Transport + 'static> rpc::Middleware<Metadata> for Middleware<T> {
 
         if let Some(subscription) = subscribe {
             return Either::A(Box::new(
-                self.transport.subscribe(request, meta, subscription).map_err(|e| ())
+                self.transport.subscribe(request, meta.into(), subscription).map_err(|e| ())
             ))
         }
 

@@ -1,5 +1,5 @@
 [package]
-name = "proxy"
+name = "simple-cache"
 version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 

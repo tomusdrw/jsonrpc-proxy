@@ -1,3 +1,16 @@
+#![warn(missing_docs)]
+#![warn(unused_extern_crates)]
+
+extern crate fnv;
+extern crate jsonrpc_core as rpc;
+extern crate jsonrpc_pubsub as pubsub;
+extern crate parking_lot;
+extern crate serde_json;
+extern crate twox_hash;
+
+#[macro_use]
+extern crate log;
+
 use std::{
     collections::HashMap,
     sync::Arc,
@@ -5,13 +18,10 @@ use std::{
 };
 use fnv::FnvHashMap;
 use rpc::{
-    self,
     futures::Future,
     futures::future::{self, Either},
 };
 use parking_lot::RwLock;
-
-use super::Metadata;
 
 type Hash = String;
 
@@ -109,7 +119,7 @@ impl Middleware {
     }
 }
 
-impl rpc::Middleware<Metadata> for Middleware {
+impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     type Future = rpc::middleware::NoopFuture;
     type CallFuture = Either<
         rpc::middleware::NoopCallFuture,
@@ -117,8 +127,8 @@ impl rpc::Middleware<Metadata> for Middleware {
     >;
 
 
-    fn on_call<F, X>(&self, call: rpc::Call, meta: Metadata, next: F) -> Either<Self::CallFuture, X> where
-        F: FnOnce(rpc::Call, Metadata) -> X + Send,
+    fn on_call<F, X>(&self, call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X> where
+        F: FnOnce(rpc::Call, M) -> X + Send,
         X: Future<Item = Option<rpc::Output>, Error = ()> + Send + 'static, 
     {
         enum Action {
@@ -150,6 +160,7 @@ impl rpc::Middleware<Metadata> for Middleware {
         match action {
             // Fallback
             Action::Next => Either::B(next(call, meta)),
+            // TODO [ToDr] Prevent multiple requests being made.
             Action::NextAndCache(hash, method_meta) => {
                 let cached = self.cached.clone();
                 Either::A(Either::A(Box::new(

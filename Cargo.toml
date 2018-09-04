@@ -1,7 +1,8 @@
 [workspace]
 members = [
-  "cli",
-  "proxy",
-  "rpc-proxy",
-  "transports",
+  "generic-proxy",
+  "plugins/simple-cache",
+  "plugins/upstream",
+  "proxy/cli",
+  "proxy/transports",
 ]
