@@ -3,8 +3,11 @@
 extern crate websocket;
 extern crate tokio_core;
 
-use std::collections::HashMap;
-use std::sync::{atomic, Arc, Mutex};
+use std::{
+    collections::HashMap,
+    fmt,
+    sync::{atomic, Arc, Weak, Mutex},
+};
 
 use pubsub;
 use rpc::{
@@ -24,11 +27,20 @@ use self::tokio_core::reactor;
 use super::{Subscription, helpers};
 
 type Pending = (oneshot::Sender<String>, PendingKind);
+type Unsubscribe = Box<Fn(pubsub::SubscriptionId) + Send>;
 
-#[derive(Debug)]
 enum PendingKind {
     Regular,
-    Subscribe(Arc<pubsub::Session>, Subscription),
+    Subscribe(Arc<pubsub::Session>, Unsubscribe),
+}
+
+impl fmt::Debug for PendingKind {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            PendingKind::Regular => write!(fmt, "Regular"),
+            PendingKind::Subscribe(ref session, _) => write!(fmt, "Subscribe({:?})", session),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -36,7 +48,7 @@ struct Shared {
     // TODO [ToDr] Get rid of Mutex, rather use `Select` and have another channel that set's up pending requests.
     pending: Mutex<HashMap<rpc::Id, Pending>>,
     // TODO [ToDr] Use (SubscriptionName, SubscriptionId) as key.
-    subscriptions: Mutex<HashMap<pubsub::SubscriptionId, Arc<pubsub::Session>>>,
+    subscriptions: Arc<Mutex<HashMap<pubsub::SubscriptionId, Weak<pubsub::Session>>>>,
     write_sender: mpsc::UnboundedSender<OwnedMessage>,
 }
 
@@ -64,9 +76,13 @@ impl Shared {
     }
 
     /// Add a new subscription id and it's correlation with the session.
-    pub fn add_subscription(&self, id: pubsub::SubscriptionId, session: Arc<pubsub::Session>) {
+    pub fn add_subscription(&self, id: pubsub::SubscriptionId, session: Arc<pubsub::Session>, unsubscribe: Unsubscribe) {
+        // make sure to send unsubscribe request and remove the subscription.
+        let id2 = id.clone();
+        session.on_drop(move || unsubscribe(id2));
+
         trace!("Registered subscription id {:?}", id);
-        self.subscriptions.lock().unwrap().insert(id, session);
+        self.subscriptions.lock().unwrap().insert(id, Arc::downgrade(&session));
     }
 
     /// Removes a subscription.
@@ -79,17 +95,19 @@ impl Shared {
         -> Option<impl Future<Item = (), Error = String>>
     {
         if let Some(session) = self.subscriptions.lock().unwrap().get(&id) {
-            // TODO we should most likely cancel the subscription if we detect the other end is unavailable.
-            Some(futures::done(session
-                // TODO don't clone the sender each time!
-                .sender()
-                .wait()
-                .send(msg)
-                .map_err(|e| format!("Error sending notification: {:?}", e))
-            ))
-        } else {
-            None
+            if let Some(session) = session.upgrade() {
+                return Some(session
+                    .sender()
+                    .send(msg)
+                    .map_err(|e| format!("Error sending notification: {:?}", e))
+                    .map(|_| ())
+                )
+            } else {
+                error!("Session is not available and subscription was not removed.");
+            }
         }
+
+        None
     }
 }
 
@@ -127,12 +145,12 @@ impl WebSocketHandler {
                             // Just a regular call, don't do anything else.
                             PendingKind::Regular => {},
                             // We have a subscription ID, register subscription.
-                            PendingKind::Subscribe(session, subscription) => {
+                            PendingKind::Subscribe(session, unsubscribe) => {
                                 let subscription_id = helpers::peek_result(t.as_bytes())
                                     .as_ref()
                                     .and_then(pubsub::SubscriptionId::parse_value);
                                 if let Some(subscription_id) = subscription_id {
-                                    self.shared.add_subscription(subscription_id, session);
+                                    self.shared.add_subscription(subscription_id, session, unsubscribe);
                                 }                    
                             },
                         }
@@ -246,11 +264,7 @@ impl super::Transport for WebSocket {
             self.shared.add_pending(id, PendingKind::Regular)
         };
 
-        Box::new(WebSocket::write_and_wait(
-            self,
-            call,
-            rx,
-        ))
+        Box::new(self.write_and_wait(call, rx))
     }
 
     fn subscribe(
@@ -270,15 +284,21 @@ impl super::Transport for WebSocket {
 
         // TODO [ToDr] Mangle ids per sender or just ensure atomicity
         let rx = {
+            let ws = self.clone();
             let id = helpers::get_id(&call);
-            self.shared.add_pending(id, PendingKind::Subscribe(session, subscription))
+            self.shared.add_pending(id, PendingKind::Subscribe(session, Box::new(move |subscriptionId| {
+                // Create unsubscribe request.
+                let call = rpc::Call::MethodCall(rpc::MethodCall {
+                    jsonrpc: Some(rpc::Version::V2),
+                    id: rpc::Id::Num(1),
+                    method: subscription.unsubscribe.clone(),
+                    params: rpc::Params::Array(vec![subscriptionId.into()]).into(),
+                });
+                ws.unsubscribe(call, subscription.clone());
+            })))
         };
 
-        Box::new(WebSocket::write_and_wait(
-            self,
-            call,
-            rx,
-        ))
+        Box::new(self.write_and_wait(call, rx))
     }
 
     fn unsubscribe(

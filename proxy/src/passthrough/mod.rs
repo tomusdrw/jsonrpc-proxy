@@ -82,8 +82,6 @@ impl<T: Transport + 'static> rpc::Middleware<Metadata> for Middleware<T> {
             }
         };
 
-        println!("Meta: {:?}", meta);
-
         if let Some(subscription) = subscribe {
             return Either::A(Box::new(
                 self.transport.subscribe(request, meta, subscription).map_err(|e| ())
