@@ -7,7 +7,10 @@ extern crate jsonrpc_ws_server as ws;
 
 pub type RpcHandler = rpc::IoHandler;
 
-use std::sync::Arc;
+use std::{
+    io,
+    sync::Arc
+};
 
 /// Starts WebSockets server on given handler.
 pub fn start_ws<T, M, S>(
@@ -26,5 +29,27 @@ pub fn start_ws<T, M, S>(
     for _p in params {
     
     }
+    println!("WS listening on {}", address);
+
     builder.start(&address)
+}
+
+/// Starts HTTP server on given handler.
+pub fn start_http<T, M, S>(
+    params: Vec<()>,
+    io: T,
+) -> io::Result<http::Server> where
+    T: Into<rpc::MetaIoHandler<M, S>>,
+    M: rpc::Metadata + Default + From<Option<Arc<pubsub::Session>>>,
+    S: rpc::Middleware<M>,
+{
+    let mut builder = http::ServerBuilder::new(io);
+    let mut address = "127.0.0.1:9934".parse().unwrap();
+    // configure the server
+    for _p in params {
+    
+    }
+    println!("HTTP listening on {}", address);
+
+    builder.threads(4).start_http(&address)
 }

@@ -15,17 +15,25 @@ use super::Metadata;
 mod helpers;
 pub mod ws;
 
+/// Represents a Pub-Sub method description.
 #[derive(Debug, Clone)]
 pub struct Subscription {
+    /// Subscribe method name.
     pub subscribe: String,
+    /// Unsubscribe method name.
     pub unsubscribe: String,
+    /// A method for notifications for that subscription.
     pub name: String,
 }
 
+/// Passthrough transport.
+///
+/// This is an upstream transport (can do load balancing, failover or parallel requests)
 pub trait Transport: Send + Sync + 'static {
     type Error;
     type Future: Future<Item = Option<rpc::Output>, Error = Self::Error> + Send + 'static;
 
+    /// Send subscribe call upstream.
     fn subscribe(
         &self,
         call: rpc::Call,
@@ -33,15 +41,21 @@ pub trait Transport: Send + Sync + 'static {
         subscription: Subscription,
     ) -> Self::Future;
 
+    /// Send unsubscribe call upstream.
     fn unsubscribe(
         &self,
         call: rpc::Call,
         subscription: Subscription,
     ) -> Self::Future;
 
+    /// Send a regular call upstream.
     fn send(&self, call: rpc::Call) -> Self::Future;
 }
 
+/// Pass-through middleware
+///
+/// Delegates the calls to the upstream `Transport` - should be used as the last middleware,
+/// since it never calls `next`.
 #[derive(Debug)]
 pub struct Middleware<T> {
     transport: T,
@@ -50,6 +64,7 @@ pub struct Middleware<T> {
 }
 
 impl<T> Middleware<T> {
+    /// Create new passthrough middleware with given upstream and the list of pubsub methods.
     pub fn new(
         transport: T,
         pubsub_methods: Vec<Subscription>,
@@ -66,7 +81,7 @@ impl<T: Transport + 'static> rpc::Middleware<Metadata> for Middleware<T> {
     type Future = rpc::middleware::NoopFuture;
     type CallFuture = rpc::middleware::NoopCallFuture;
 
-    fn on_call<F, X>(&self, request: rpc::Call, meta: Metadata, next: F) -> Either<Self::CallFuture, X> where
+    fn on_call<F, X>(&self, request: rpc::Call, meta: Metadata, _next: F) -> Either<Self::CallFuture, X> where
         F: FnOnce(rpc::Call, Metadata) -> X + Send,
         X: Future<Item = Option<rpc::Output>, Error = ()> + Send + 'static, 
     {

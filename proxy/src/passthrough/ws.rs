@@ -6,9 +6,9 @@ extern crate tokio_core;
 use std::{
     collections::HashMap,
     fmt,
-    sync::{atomic, Arc, Weak, Mutex},
+    sync::{atomic, Arc, Weak},
 };
-
+use parking_lot::{Mutex, RwLock};
 use pubsub;
 use rpc::{
     self,
@@ -48,7 +48,7 @@ struct Shared {
     // TODO [ToDr] Get rid of Mutex, rather use `Select` and have another channel that set's up pending requests.
     pending: Mutex<HashMap<rpc::Id, Pending>>,
     // TODO [ToDr] Use (SubscriptionName, SubscriptionId) as key.
-    subscriptions: Arc<Mutex<HashMap<pubsub::SubscriptionId, Weak<pubsub::Session>>>>,
+    subscriptions: RwLock<HashMap<pubsub::SubscriptionId, Weak<pubsub::Session>>>,
     write_sender: mpsc::UnboundedSender<OwnedMessage>,
 }
 
@@ -61,7 +61,7 @@ impl Shared {
     {
         if let Some(id) = id {
             let (tx, rx) = futures::oneshot();
-            self.pending.lock().unwrap().insert(id.clone(), (tx, kind));
+            self.pending.lock().insert(id.clone(), (tx, kind));
             Some(rx)
         } else {
             None
@@ -72,7 +72,7 @@ impl Shared {
     ///
     /// Most likely the response has been received so we can respond or add a subscription instead.
     pub fn remove_pending(&self, id: &rpc::Id) -> Option<Pending> {
-        self.pending.lock().unwrap().remove(id)
+        self.pending.lock().remove(id)
     }
 
     /// Add a new subscription id and it's correlation with the session.
@@ -82,19 +82,19 @@ impl Shared {
         session.on_drop(move || unsubscribe(id2));
 
         trace!("Registered subscription id {:?}", id);
-        self.subscriptions.lock().unwrap().insert(id, Arc::downgrade(&session));
+        self.subscriptions.write().insert(id, Arc::downgrade(&session));
     }
 
     /// Removes a subscription.
     pub fn remove_subscription(&self, id: &pubsub::SubscriptionId) {
         trace!("Removing subscription id {:?}", id);
-        self.subscriptions.lock().unwrap().remove(id);
+        self.subscriptions.write().remove(id);
     }
 
     pub fn notify_subscription(&self, id: &pubsub::SubscriptionId, msg: String) 
         -> Option<impl Future<Item = (), Error = String>>
     {
-        if let Some(session) = self.subscriptions.lock().unwrap().get(&id) {
+        if let Some(session) = self.subscriptions.read().get(&id) {
             if let Some(session) = session.upgrade() {
                 return Some(session
                     .sender()
@@ -286,13 +286,13 @@ impl super::Transport for WebSocket {
         let rx = {
             let ws = self.clone();
             let id = helpers::get_id(&call);
-            self.shared.add_pending(id, PendingKind::Subscribe(session, Box::new(move |subscriptionId| {
+            self.shared.add_pending(id, PendingKind::Subscribe(session, Box::new(move |subs_id| {
                 // Create unsubscribe request.
                 let call = rpc::Call::MethodCall(rpc::MethodCall {
                     jsonrpc: Some(rpc::Version::V2),
                     id: rpc::Id::Num(1),
                     method: subscription.unsubscribe.clone(),
-                    params: rpc::Params::Array(vec![subscriptionId.into()]).into(),
+                    params: rpc::Params::Array(vec![subs_id.into()]).into(),
                 });
                 ws.unsubscribe(call, subscription.clone());
             })))

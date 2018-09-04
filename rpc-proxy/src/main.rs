@@ -28,12 +28,12 @@ fn main() {
         &event_loop.handle(),
     ).unwrap();
 
+    let handler = proxy::handler(transport.clone());
+    let _server1 = transports::start_ws(vec![], handler).unwrap();
     let handler = proxy::handler(transport);
-    let server = transports::start_ws(vec![], handler).unwrap();
+    let _server2 = transports::start_http(vec![], handler).unwrap();
 
     loop {
         event_loop.turn(None);
     }
-
-    server.wait().unwrap();
 }
