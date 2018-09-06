@@ -14,7 +14,7 @@ extern crate upstream;
 #[macro_use]
 extern crate log;
 
-pub mod params;
+pub mod config;
 
 use std::{
     sync::{atomic, Arc},
@@ -113,14 +113,14 @@ impl WebSocket {
     /// Create new WebSocket transport within existing Event Loop.
     pub fn new(
         handle: &reactor::Handle,
-        params: Vec<params::Configuration>,
+        params: Vec<config::Param>,
     ) -> Result<Self, String> {
 
         let mut url = "ws://127.0.0.1:9944".parse().expect("Valid address given.");
 
         for p in params {
             match p {
-                params::Configuration::Url(new_url) => {
+                config::Param::Url(new_url) => {
                     url = new_url;
                 }
             }

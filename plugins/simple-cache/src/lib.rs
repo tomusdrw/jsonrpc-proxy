@@ -6,10 +6,15 @@
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]
 
+extern crate cli_params;
 extern crate fnv;
 extern crate jsonrpc_core as rpc;
 extern crate parking_lot;
+extern crate serde_json;
 extern crate twox_hash;
+
+#[macro_use]
+extern crate serde_derive;
 
 use std::{
     collections::HashMap,
@@ -25,15 +30,17 @@ use parking_lot::RwLock;
 
 type Hash = String;
 
+pub mod config;
+
 /// Describes what parameters should have separate caches.
-#[derive(Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub enum ParamsCache {
     /// Parameters for the method doesn't matter. Cache only by method name.
     IgnoreParams,
 }
 
 /// Cache eviction policy
-#[derive(Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub enum CacheEviction {
     /// Time-based caching. The cache entry is discarded after given amount of time.
     Time(time::Duration),
@@ -50,7 +57,7 @@ enum MethodMeta {
 ///
 /// Should know how to compute a hash that is used to compare requests.
 /// TODO [ToDr] Support different eviction policies.
-#[derive(Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Method {
     name: String,
     params: ParamsCache,
@@ -111,7 +118,14 @@ impl Middleware {
     /// Creates new caching middleware given cacheable methods definitions.
     ///
     /// TODO [ToDr] Cache limits
-    pub fn new(methods: Vec<Method>) -> Self {
+    pub fn new(params: &[config::Param]) -> Self {
+        let mut methods = Vec::new();
+        for p in params {
+            match p {
+                config::Param::CachedMethods(ref m) => methods = m.clone(),
+            }
+        }
+
         Middleware {
             cacheable: methods.into_iter().map(|x| (x.name.clone(), x)).collect(),
             cached: Default::default(),
