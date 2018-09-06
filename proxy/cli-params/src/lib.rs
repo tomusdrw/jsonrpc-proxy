@@ -1,3 +1,7 @@
+//! A base type for parameter definition.
+//!
+//! Intendend to be used by plugins to expose configurable parameters.
+
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]
 

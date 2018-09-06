@@ -35,3 +35,14 @@ pub fn params() -> Vec<cli_params::Param<Param>> {
 
 #[derive(Deserialize)]
 struct CacheMethods(Vec<Method>);
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_deserialize_example() {
+        let _m: CacheMethods = serde_json::from_slice(include_bytes!("../../../examples/cache.json")).unwrap();
+    }
+}

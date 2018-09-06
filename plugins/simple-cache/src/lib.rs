@@ -34,6 +34,7 @@ pub mod config;
 
 /// Describes what parameters should have separate caches.
 #[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum ParamsCache {
     /// Parameters for the method doesn't matter. Cache only by method name.
     IgnoreParams,
@@ -41,6 +42,7 @@ pub enum ParamsCache {
 
 /// Cache eviction policy
 #[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum CacheEviction {
     /// Time-based caching. The cache entry is discarded after given amount of time.
     Time(time::Duration),
