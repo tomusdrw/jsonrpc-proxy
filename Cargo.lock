@@ -133,7 +133,12 @@ name = "cli"
 version = "0.1.0"
 dependencies = [
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cli-params 0.1.0",
 ]
+
+[[package]]
+name = "cli-params"
+version = "0.1.0"
 
 [[package]]
 name = "crossbeam-deque"
@@ -995,6 +1000,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "transports"
 version = "0.1.0"
 dependencies = [
+ "cli-params 0.1.0",
  "jsonrpc-core 8.0.2 (git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware)",
  "jsonrpc-http-server 8.0.1 (git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware)",
  "jsonrpc-pubsub 8.0.1 (git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware)",

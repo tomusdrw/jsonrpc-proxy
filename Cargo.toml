@@ -4,5 +4,6 @@ members = [
   "plugins/simple-cache",
   "plugins/upstream",
   "proxy/cli",
+  "proxy/cli-params",
   "proxy/transports",
 ]

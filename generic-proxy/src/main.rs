@@ -1,3 +1,8 @@
+//! Generic RPC proxy with default set of plugins.
+//!
+//! - Allows configuration to be passed via CLI options or a yaml file.
+//! - Supports simple time-based cache
+
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]
 
@@ -42,9 +47,14 @@ fn main() {
 
     let yml = load_yaml!("./cli.yml");
     let app = App::from_yaml(yml);
-    // TODO [ToDr] Configure other app options]
 
-    let _matches = app.get_matches_from(args);
+    // TODO [ToDr] Configure other app options]
+    let ws_params = transports::ws::params();
+    let app = cli::configure_app(app, &ws_params);
+
+    // Parse matches
+    let matches = app.get_matches_from(args);
+    let ws_params = cli::parse_matches(&matches, &ws_params).unwrap();
 
     // Actually run the damn thing.
     let mut event_loop = tokio_core::reactor::Core::new().unwrap();
@@ -54,8 +64,8 @@ fn main() {
     ).unwrap();
 
 
-    let _server1 = transports::start_ws(vec![], handler(transport.clone())).unwrap();
-    let _server2 = transports::start_http(vec![], handler(transport.clone())).unwrap();
+    let _server1 = transports::ws::start(ws_params, handler(transport.clone())).unwrap();
+    let _server2 = transports::http::start(vec![], handler(transport.clone())).unwrap();
 
     loop {
         event_loop.turn(None);

@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 
 [dependencies]
+cli-params = { path = "../cli-params" }
 # TODO [ToDr] feature-gate transports.
 jsonrpc-core = { git = "https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware"}
 jsonrpc-http-server = { git = "https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware" }
