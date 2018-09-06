@@ -3,6 +3,7 @@ members = [
   "generic-proxy",
   "plugins/simple-cache",
   "plugins/upstream",
+  "plugins/ws-upstream",
   "proxy/cli",
   "proxy/cli-params",
   "proxy/transports",

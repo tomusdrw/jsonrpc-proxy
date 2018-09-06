@@ -1,12 +1,14 @@
+//! Upstream base crate.
+//!
+//! Used by specific implementations and contains abstract logic that can be re-used between them.
+
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]
 
-extern crate fnv;
 extern crate jsonrpc_core as rpc;
 extern crate jsonrpc_pubsub as pubsub;
 extern crate parking_lot;
 extern crate serde_json;
-extern crate twox_hash;
 
 #[macro_use]
 extern crate log;
@@ -21,8 +23,8 @@ use rpc::{
     futures::future::Either,
 };
 
-mod helpers;
-pub mod ws;
+pub mod helpers;
+pub mod shared;
 
 /// Represents a Pub-Sub method description.
 #[derive(Debug, Clone)]
@@ -39,7 +41,9 @@ pub struct Subscription {
 ///
 /// This is an upstream transport (can do load balancing, failover or parallel requests)
 pub trait Transport: Send + Sync + 'static {
-    type Error;
+    /// Error type of the transport.
+    type Error: ::std::fmt::Debug;
+    /// Future returned by the transport.
     type Future: Future<Item = Option<rpc::Output>, Error = Self::Error> + Send + 'static;
 
     /// Send subscribe call upstream.
@@ -111,18 +115,24 @@ impl<T, M> rpc::Middleware<M> for Middleware<T> where
 
         if let Some(subscription) = subscribe {
             return Either::A(Box::new(
-                self.transport.subscribe(request, meta.into(), subscription).map_err(|e| ())
+                self.transport.subscribe(request, meta.into(), subscription).map_err(|e| {
+                    warn!("Failed to subscribe: {:?}", e);
+                })
             ))
         }
 
         if let Some(subscription) = unsubscribe {
             return Either::A(Box::new(
-                self.transport.unsubscribe(request, subscription).map_err(|e| ())
+                self.transport.unsubscribe(request, subscription).map_err(|e| {
+                    warn!("Failed to unsubscribe: {:?}", e);
+                })
             ))
         }
 
         Either::A(Box::new(
-            self.transport.send(request).map_err(|e| ())
+            self.transport.send(request).map_err(|e| {
+                warn!("Failed to send: {:?}", e);
+            })
         ))
     }
 }

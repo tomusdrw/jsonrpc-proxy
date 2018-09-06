@@ -18,6 +18,7 @@ extern crate tokio_core;
 extern crate simple_cache;
 extern crate transports;
 extern crate upstream;
+extern crate ws_upstream;
 
 use std::sync::Arc;
 use clap::App;
@@ -61,7 +62,7 @@ fn main() {
 
     // Actually run the damn thing.
     let mut event_loop = tokio_core::reactor::Core::new().unwrap();
-    let transport = upstream::ws::WebSocket::with_event_loop(
+    let transport = ws_upstream::WebSocket::with_event_loop(
         "ws://localhost:9944",
         &event_loop.handle(),
     ).unwrap();

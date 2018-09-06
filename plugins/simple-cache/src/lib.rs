@@ -1,15 +1,15 @@
+//! A simplistic RPC cache.
+//!
+//! Caches the result of calling the RPC method and clears it
+//! depending on the cache eviction policy.
+
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]
 
 extern crate fnv;
 extern crate jsonrpc_core as rpc;
-extern crate jsonrpc_pubsub as pubsub;
 extern crate parking_lot;
-extern crate serde_json;
 extern crate twox_hash;
-
-#[macro_use]
-extern crate log;
 
 use std::{
     collections::HashMap,

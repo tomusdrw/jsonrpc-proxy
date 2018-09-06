@@ -1,119 +1,43 @@
-//! WebSocket Transport
+//! WebSocket Upstream Transport
 
+#![warn(missing_docs)]
+#![warn(unused_extern_crates)]
+
+extern crate jsonrpc_core as rpc;
+extern crate jsonrpc_pubsub as pubsub;
+extern crate serde_json;
 extern crate websocket;
 extern crate tokio_core;
+extern crate upstream;
+
+#[macro_use]
+extern crate log;
 
 use std::{
-    collections::HashMap,
-    fmt,
-    sync::{atomic, Arc, Weak},
+    sync::{atomic, Arc},
 };
-use parking_lot::{Mutex, RwLock};
-use pubsub;
 use rpc::{
-    self,
     futures::{
         self, Future, Sink, Stream,
         sync::{mpsc, oneshot},
     },
 };
-use serde_json;
-use self::websocket::{
+use upstream::{
+    Subscription,
+    helpers,
+    shared::{PendingKind, Shared}, 
+};
+use websocket::{
     ClientBuilder,
     OwnedMessage,
     url::Url,
 };
-use self::tokio_core::reactor;
-use super::{Subscription, helpers};
-
-type Pending = (oneshot::Sender<String>, PendingKind);
-type Unsubscribe = Box<Fn(pubsub::SubscriptionId) + Send>;
-
-enum PendingKind {
-    Regular,
-    Subscribe(Arc<pubsub::Session>, Unsubscribe),
-}
-
-impl fmt::Debug for PendingKind {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            PendingKind::Regular => write!(fmt, "Regular"),
-            PendingKind::Subscribe(ref session, _) => write!(fmt, "Subscribe({:?})", session),
-        }
-    }
-}
-
-#[derive(Debug)]
-struct Shared {
-    // TODO [ToDr] Get rid of Mutex, rather use `Select` and have another channel that set's up pending requests.
-    pending: Mutex<HashMap<rpc::Id, Pending>>,
-    // TODO [ToDr] Use (SubscriptionName, SubscriptionId) as key.
-    subscriptions: RwLock<HashMap<pubsub::SubscriptionId, Weak<pubsub::Session>>>,
-    write_sender: mpsc::UnboundedSender<OwnedMessage>,
-}
-
-impl Shared {
-    /// Adds a new request to the list of pending requests
-    ///
-    /// We are awaiting the response for those requests.
-    pub fn add_pending(&self, id: Option<&rpc::Id>, kind: PendingKind) 
-        -> Option<oneshot::Receiver<String>>
-    {
-        if let Some(id) = id {
-            let (tx, rx) = futures::oneshot();
-            self.pending.lock().insert(id.clone(), (tx, kind));
-            Some(rx)
-        } else {
-            None
-        }
-    }
-
-    /// Removes a requests from the list of pending requests.
-    ///
-    /// Most likely the response has been received so we can respond or add a subscription instead.
-    pub fn remove_pending(&self, id: &rpc::Id) -> Option<Pending> {
-        self.pending.lock().remove(id)
-    }
-
-    /// Add a new subscription id and it's correlation with the session.
-    pub fn add_subscription(&self, id: pubsub::SubscriptionId, session: Arc<pubsub::Session>, unsubscribe: Unsubscribe) {
-        // make sure to send unsubscribe request and remove the subscription.
-        let id2 = id.clone();
-        session.on_drop(move || unsubscribe(id2));
-
-        trace!("Registered subscription id {:?}", id);
-        self.subscriptions.write().insert(id, Arc::downgrade(&session));
-    }
-
-    /// Removes a subscription.
-    pub fn remove_subscription(&self, id: &pubsub::SubscriptionId) {
-        trace!("Removing subscription id {:?}", id);
-        self.subscriptions.write().remove(id);
-    }
-
-    pub fn notify_subscription(&self, id: &pubsub::SubscriptionId, msg: String) 
-        -> Option<impl Future<Item = (), Error = String>>
-    {
-        if let Some(session) = self.subscriptions.read().get(&id) {
-            if let Some(session) = session.upgrade() {
-                return Some(session
-                    .sender()
-                    .send(msg)
-                    .map_err(|e| format!("Error sending notification: {:?}", e))
-                    .map(|_| ())
-                )
-            } else {
-                error!("Session is not available and subscription was not removed.");
-            }
-        }
-
-        None
-    }
-}
+use tokio_core::reactor;
 
 
 struct WebSocketHandler {
     shared: Arc<Shared>,
+    write_sender: mpsc::UnboundedSender<OwnedMessage>,
 }
 
 impl WebSocketHandler {
@@ -121,10 +45,10 @@ impl WebSocketHandler {
         use self::futures::{IntoFuture, future::Either};
 
         Either::B(match message {
-            OwnedMessage::Close(e) => self.shared.write_sender
+            OwnedMessage::Close(e) => self.write_sender
                 .unbounded_send(OwnedMessage::Close(e))
                 .map_err(|e| format!("Error sending close message: {:?}", e)),
-            OwnedMessage::Ping(d) => self.shared.write_sender
+            OwnedMessage::Ping(d) => self.write_sender
                 .unbounded_send(OwnedMessage::Pong(d))
                 .map_err(|e| format!("Error sending pong message: {:?}", e)),
             OwnedMessage::Text(t) => {
@@ -179,6 +103,7 @@ pub struct WebSocket {
     id: Arc<atomic::AtomicUsize>,
     url: Url,
     shared: Arc<Shared>,
+    write_sender: mpsc::UnboundedSender<OwnedMessage>,
 }
 
 
@@ -192,15 +117,12 @@ impl WebSocket {
 
         let url = url.parse().map_err(|e| format!("{:?}", e))?;
         let (write_sender, write_receiver) = mpsc::unbounded();
-        let shared = Arc::new(Shared {
-            pending: Default::default(),
-            subscriptions: Default::default(),
-            write_sender,
-        });
+        let shared = Arc::new(Shared::default());
 
         let ws_future = {
             let handler = WebSocketHandler {
                 shared: shared.clone(),
+                write_sender: write_sender.clone(),
             };
 
             ClientBuilder::from_url(&url)
@@ -232,13 +154,14 @@ impl WebSocket {
             id: Arc::new(atomic::AtomicUsize::new(1)),
             url,
             shared,
+            write_sender,
         })
     }
 
     fn write_and_wait(&self, call: rpc::Call, response: Option<oneshot::Receiver<String>>) -> impl Future<Item = Option<rpc::Output>, Error = String>
     {
         let request = rpc::types::to_string(&call).expect("jsonrpc-core are infallible");
-        let result = self.shared.write_sender
+        let result = self.write_sender
             .unbounded_send(OwnedMessage::Text(request))
             .map_err(|e| format!("Error sending request: {:?}", e));
 
@@ -251,7 +174,7 @@ impl WebSocket {
 // TODO [ToDr] Might be better to simply have one connection per subscription.
 // in case we detect that there is something wrong (i.e. the client disconnected)
 // we disconnect from the upstream as well and all the subscriptions are dropped automatically.
-impl super::Transport for WebSocket {
+impl upstream::Transport for WebSocket {
     type Error = String;
     type Future = Box<Future<Item = Option<rpc::Output>, Error = Self::Error> + Send>;
 
