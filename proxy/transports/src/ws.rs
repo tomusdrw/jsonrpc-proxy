@@ -5,14 +5,15 @@ use std::{
     sync::Arc,
 };
 
+use jsonrpc_ws_server as ws;
 use params::Param;
 use pubsub;
 use rpc;
-use jsonrpc_ws_server as ws;
 
 const CATEGORY: &str = "WebSockets Server";
 const PREFIX: &str = "websockets";
 
+/// Returns CLI configuration options for the HTTP server.
 pub fn params<M, S>() -> Vec<Param<Box<Configurator<M, S>>>> where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
@@ -86,7 +87,6 @@ fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser:
 {
     Param {
         category: CATEGORY.into(),
-        arg: name.into(),
         name: format!("{}-{}", PREFIX, name),
         description: description.into(),
         default_value: default_value.into(),

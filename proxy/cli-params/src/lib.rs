@@ -21,7 +21,6 @@ impl<F, X> Parser for F where
 /// Describes a CLI parameter that should be present in the help.
 pub struct Param<Exec> {
     pub category: String,
-    pub arg: String,
     pub name: String,
     pub description: String,
     pub default_value: String,
