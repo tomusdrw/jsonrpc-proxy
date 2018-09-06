@@ -55,16 +55,21 @@ fn main() {
     let app = cli::configure_app(app, &ws_params);
     let app = cli::configure_app(app, &http_params);
 
+
+    let upstream_params = ws_upstream::params::all();
+    let app = cli::configure_app(app, &upstream_params);
+
     // Parse matches
     let matches = app.get_matches_from(args);
     let ws_params = cli::parse_matches(&matches, &ws_params).unwrap();
     let http_params = cli::parse_matches(&matches, &http_params).unwrap();
+    let upstream_params = cli::parse_matches(&matches, &upstream_params).unwrap();
 
     // Actually run the damn thing.
     let mut event_loop = tokio_core::reactor::Core::new().unwrap();
-    let transport = ws_upstream::WebSocket::with_event_loop(
-        "ws://localhost:9944",
+    let transport = ws_upstream::WebSocket::new(
         &event_loop.handle(),
+        upstream_params,
     ).unwrap();
 
 

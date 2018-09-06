@@ -1210,6 +1210,7 @@ dependencies = [
 name = "ws-upstream"
 version = "0.1.0"
 dependencies = [
+ "cli-params 0.1.0",
  "jsonrpc-core 8.0.2 (git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware)",
  "jsonrpc-pubsub 8.0.1 (git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware)",
  "log 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",

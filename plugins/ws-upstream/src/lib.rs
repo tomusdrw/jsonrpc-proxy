@@ -3,6 +3,7 @@
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]
 
+extern crate cli_params;
 extern crate jsonrpc_core as rpc;
 extern crate jsonrpc_pubsub as pubsub;
 extern crate serde_json;
@@ -12,6 +13,8 @@ extern crate upstream;
 
 #[macro_use]
 extern crate log;
+
+pub mod params;
 
 use std::{
     sync::{atomic, Arc},
@@ -33,7 +36,6 @@ use websocket::{
     url::Url,
 };
 use tokio_core::reactor;
-
 
 struct WebSocketHandler {
     shared: Arc<Shared>,
@@ -109,13 +111,23 @@ pub struct WebSocket {
 
 impl WebSocket {
     /// Create new WebSocket transport within existing Event Loop.
-    pub fn with_event_loop(
-        url: &str,
+    pub fn new(
         handle: &reactor::Handle,
+        params: Vec<params::Configuration>,
     ) -> Result<Self, String> {
+
+        let mut url = "ws://127.0.0.1:9944".parse().expect("Valid address given.");
+
+        for p in params {
+            match p {
+                params::Configuration::Url(new_url) => {
+                    url = new_url;
+                }
+            }
+        }
+
         trace!("Connecting to: {:?}", url);
 
-        let url = url.parse().map_err(|e| format!("{:?}", e))?;
         let (write_sender, write_receiver) = mpsc::unbounded();
         let shared = Arc::new(Shared::default());
 
