@@ -8,7 +8,7 @@ use Method;
 /// A configuration option to apply.
 pub enum Param {
     /// Methods that should be cached.
-    CachedMethods(Vec<Method>),
+    CachedMethods(Cache),
 }
 
 /// Returns a list of supported configuration parameters.
@@ -16,26 +16,39 @@ pub fn params() -> Vec<cli_params::Param<Param>> {
     vec![
         cli_params::Param::new(
             "Simple Cache",
-            "cached-methods-path",
+            "simple-cache-config",
             "A path to a JSON file containing a list of methods that should be cached. See examples for the file schema.",
             "-",
             |path: String| {
                 if &path == "-" {
-                    return Ok(Param::CachedMethods(vec![]))
+                    return Ok(Param::CachedMethods(Default::default()))
                 }
 
                 let file = fs::File::open(&path).map_err(|e| format!("Can't open cache file at {}: {:?}", path, e))?;
                 let buf_file = io::BufReader::new(file);
-                let methods: CacheMethods = serde_json::from_reader(buf_file).map_err(|e| format!("Invalid JSON at {}: {:?}", path, e))?;
-                Ok(Param::CachedMethods(methods.0))
+                let methods: Cache = serde_json::from_reader(buf_file).map_err(|e| format!("Invalid JSON at {}: {:?}", path, e))?;
+                Ok(Param::CachedMethods(methods))
             }
         )
     ]
 }
 
-#[derive(Deserialize)]
-struct CacheMethods(Vec<Method>);
-
+/// Cache configuration
+#[derive(Clone, Deserialize)]
+pub struct Cache {
+    /// If not enabled method definitions are ignored.
+    pub enabled: bool,
+    /// Per-method definitions
+    pub methods: Vec<Method>
+}
+impl Default for Cache {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            methods: Default::default(),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

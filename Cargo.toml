@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "generic-proxy",
+  "plugins/permissioning",
   "plugins/simple-cache",
   "plugins/upstream",
   "plugins/ws-upstream",

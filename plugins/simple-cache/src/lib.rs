@@ -108,6 +108,7 @@ impl Method {
 /// for single method, based on the parameters.
 #[derive(Debug)]
 pub struct Middleware {
+    enabled: bool,
     cacheable: FnvHashMap<String, Method>,
     cached: Arc<RwLock<HashMap<
         Hash, 
@@ -121,15 +122,16 @@ impl Middleware {
     ///
     /// TODO [ToDr] Cache limits
     pub fn new(params: &[config::Param]) -> Self {
-        let mut methods = Vec::new();
+        let mut cache = config::Cache::default();
         for p in params {
             match p {
-                config::Param::CachedMethods(ref m) => methods = m.clone(),
+                config::Param::CachedMethods(ref m) => cache = m.clone(),
             }
         }
 
         Middleware {
-            cacheable: methods.into_iter().map(|x| (x.name.clone(), x)).collect(),
+            enabled: cache.enabled,
+            cacheable: cache.methods.into_iter().map(|x| (x.name.clone(), x)).collect(),
             cached: Default::default(),
         }
     }
@@ -147,6 +149,10 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
         F: FnOnce(rpc::Call, M) -> X + Send,
         X: Future<Item = Option<rpc::Output>, Error = ()> + Send + 'static, 
     {
+        if !self.enabled {
+            return Either::B(next(call, meta));
+        }
+
         enum Action {
             Next,
             NextAndCache(Hash, MethodMeta),

@@ -1,12 +1,15 @@
-[
-  {
-    "name": "chain_getBlock",
-    "params": "ignoreParams",
-    "eviction": {
-      "time": {
-        "secs": 50000,
-        "nanos": 0
+{
+  "enabled": true,
+  "methods": [
+    {
+      "name": "chain_getBlock",
+      "params": "ignoreParams",
+      "eviction": {
+        "time": {
+          "secs": 50000,
+          "nanos": 0
+        }
       }
     }
-  }
-]
+  ]
+}

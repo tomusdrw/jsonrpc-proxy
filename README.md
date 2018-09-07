@@ -1,6 +1,12 @@
 jsonrpc-proxy
 =================================
 
+# Ideas
+
+- [ ] Rate Limitting
+- [ ] Fail over
+- [ ] Load balancing
+
 # Usage
 
 ```
