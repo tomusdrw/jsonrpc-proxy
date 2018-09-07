@@ -49,9 +49,13 @@ fn main() {
 
     // TODO [ToDr] Configure other app options]
     let ws_params = transports::ws::params();
-    let http_params = transports::http::params();
     let app = cli::configure_app(app, &ws_params);
+    let http_params = transports::http::params();
     let app = cli::configure_app(app, &http_params);
+    let tcp_params = transports::tcp::params();
+    let app = cli::configure_app(app, &tcp_params);
+    let ipc_params = transports::ipc::params();
+    let app = cli::configure_app(app, &ipc_params);
 
     let upstream_params = ws_upstream::config::params();
     let app = cli::configure_app(app, &upstream_params);
@@ -63,6 +67,8 @@ fn main() {
     let matches = app.get_matches_from(args);
     let ws_params = cli::parse_matches(&matches, &ws_params).unwrap();
     let http_params = cli::parse_matches(&matches, &http_params).unwrap();
+    let tcp_params = cli::parse_matches(&matches, &tcp_params).unwrap();
+    let ipc_params = cli::parse_matches(&matches, &ipc_params).unwrap();
     let upstream_params = cli::parse_matches(&matches, &upstream_params).unwrap();
     let cache_params = cli::parse_matches(&matches, &cache_params).unwrap();
 
@@ -74,8 +80,11 @@ fn main() {
     ).unwrap();
 
 
-    let _server1 = transports::ws::start(ws_params, handler(transport.clone(), &cache_params)).unwrap();
-    let _server2 = transports::http::start(http_params, handler(transport.clone(), &cache_params)).unwrap();
+    let h = || handler(transport.clone(), &cache_params);
+    let _server1 = transports::ws::start(ws_params, h()).unwrap();
+    let _server2 = transports::http::start(http_params, h()).unwrap();
+    let _server3 = transports::tcp::start(tcp_params, h()).unwrap();
+    let _server4 = transports::ipc::start(ipc_params, h()).unwrap();
 
     loop {
         event_loop.turn(None);

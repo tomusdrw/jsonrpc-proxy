@@ -13,7 +13,7 @@ use rpc;
 const CATEGORY: &str = "WebSockets Server";
 const PREFIX: &str = "websockets";
 
-/// Returns CLI configuration options for the HTTP server.
+/// Returns CLI configuration options for the WS server.
 pub fn params<M, S>() -> Vec<Param<Box<Configurator<M, S>>>> where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
