@@ -44,7 +44,7 @@ pub struct Method {
     /// Method name
     pub name: String,
     /// Method access details
-    pub access: Access,
+    pub policy: Access,
 }
 
 /// Represents permissioning configuration
@@ -111,7 +111,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             match call {
                 rpc::Call::MethodCall(rpc::MethodCall { ref method, .. }) => {
                     if let Some(m) = self.permissioned.get(method) {
-                        to_action(&m.access)
+                        to_action(&m.policy)
                     } else {
                         to_action(&self.base)
                     }

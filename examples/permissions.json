@@ -1,0 +1,9 @@
+{
+  "policy": "deny",
+  "methods": [
+    {
+      "name": "state_getStorage",
+      "policy": "allow"
+    }
+  ]
+}
