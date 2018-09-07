@@ -8,6 +8,8 @@ cli-params = { path = "../cli-params" }
 # TODO [ToDr] feature-gate transports.
 jsonrpc-core = { git = "https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware"}
 jsonrpc-http-server = { git = "https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware" }
+jsonrpc-ipc-server = { git = "https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware" }
 jsonrpc-pubsub = { git = "https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware" }
+jsonrpc-tcp-server = { git = "https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware" }
 jsonrpc-ws-server = { git = "https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware" }
 log = "0.3"

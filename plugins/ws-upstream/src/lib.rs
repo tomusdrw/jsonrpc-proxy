@@ -126,7 +126,7 @@ impl WebSocket {
             }
         }
 
-        trace!("Connecting to: {:?}", url);
+        println!("[WS] Connecting to: {:?}", url);
 
         let (write_sender, write_receiver) = mpsc::unbounded();
         let shared = Arc::new(Shared::default());
