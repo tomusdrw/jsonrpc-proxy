@@ -40,7 +40,7 @@ impl fmt::Debug for PendingKind {
 /// Shared subscription and pending requests manager.
 #[derive(Debug, Default)]
 pub struct Shared {
-    // TODO [ToDr] Get rid of Mutex, rather use `Select` and have another channel that set's up pending requests.
+    // TODO [ToDr] Get rid of Mutex, rather use `Select` and have another channel that sets up pending requests.
     pending: Mutex<HashMap<rpc::Id, Pending>>,
     // TODO [ToDr] Use (SubscriptionName, SubscriptionId) as key.
     subscriptions: RwLock<HashMap<pubsub::SubscriptionId, Weak<pubsub::Session>>>,

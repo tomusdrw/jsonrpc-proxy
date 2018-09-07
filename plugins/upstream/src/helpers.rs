@@ -12,7 +12,7 @@ pub fn peek_subscription_id(bytes: &[u8]) -> Option<pubsub::SubscriptionId> {
     serde_json::from_slice::<rpc::Notification>(bytes)
         .ok()
         .and_then(|notification| {
-            if let Some(rpc::Params::Map(ref map)) = notification.params {
+            if let rpc::Params::Map(ref map) = notification.params {
                 map.get("subscription").and_then(|v| pubsub::SubscriptionId::parse_value(v))
             } else {
                 None
@@ -45,7 +45,7 @@ pub fn get_method_name(call: &rpc::Call) -> Option<&str> {
     match *call {
         rpc::Call::MethodCall(rpc::MethodCall { ref method, .. }) => Some(method),
         rpc::Call::Notification(rpc::Notification { ref method, .. }) => Some(method),
-        rpc::Call::Invalid(_) => None,
+        rpc::Call::Invalid { .. } => None,
     }
 }
 
@@ -54,15 +54,15 @@ pub fn get_id(call: &rpc::Call) -> Option<&rpc::Id> {
     match *call {
         rpc::Call::MethodCall(rpc::MethodCall { ref id, .. }) => Some(id),
         rpc::Call::Notification(_) => None,
-        rpc::Call::Invalid(ref id) => Some(id),
+        rpc::Call::Invalid { ref id, .. } => Some(id),
     }
 }
 
 /// Extract the first parameter of a call and parse it as subscription id.
 pub fn get_unsubscribe_id(call: &rpc::Call) -> Option<pubsub::SubscriptionId> {
     match *call {
-        rpc::Call::MethodCall(rpc::MethodCall { params: Some(ref params), .. }) |
-        rpc::Call::Notification(rpc::Notification { params: Some(ref params), .. }) => match params {
+        rpc::Call::MethodCall(rpc::MethodCall { ref params, .. }) |
+        rpc::Call::Notification(rpc::Notification { ref params, .. }) => match params {
             rpc::Params::Array(ref vec) if !vec.is_empty() => {
                 pubsub::SubscriptionId::parse_value(&vec[0])
             },

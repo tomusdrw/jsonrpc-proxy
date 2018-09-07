@@ -82,7 +82,7 @@ impl Method {
     }
 
     /// Returns a hash of parameters of this method.
-    fn hash(&self, _parameters: &Option<rpc::Params>) -> Hash {
+    fn hash(&self, _parameters: &rpc::Params) -> Hash {
         // TODO [ToDr] Should take parameters into account
         self.name.clone()
     }

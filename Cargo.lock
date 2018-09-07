@@ -324,7 +324,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "jsonrpc-core"
 version = "8.0.2"
-source = "git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware#d644708364c588f37388a837f255250de8c5ebf3"
+source = "git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware#0e379d172d2d93f15bdc98a794a95b214db154aa"
 dependencies = [
  "futures 0.1.21 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -336,7 +336,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-http-server"
 version = "8.0.1"
-source = "git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware#d644708364c588f37388a837f255250de8c5ebf3"
+source = "git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware#0e379d172d2d93f15bdc98a794a95b214db154aa"
 dependencies = [
  "hyper 0.11.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 8.0.2 (git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware)",
@@ -349,7 +349,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-pubsub"
 version = "8.0.1"
-source = "git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware#d644708364c588f37388a837f255250de8c5ebf3"
+source = "git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware#0e379d172d2d93f15bdc98a794a95b214db154aa"
 dependencies = [
  "jsonrpc-core 8.0.2 (git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware)",
  "log 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -359,7 +359,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-server-utils"
 version = "8.0.1"
-source = "git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware#d644708364c588f37388a837f255250de8c5ebf3"
+source = "git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware#0e379d172d2d93f15bdc98a794a95b214db154aa"
 dependencies = [
  "bytes 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "globset 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -372,7 +372,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-ws-server"
 version = "8.0.0"
-source = "git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware#d644708364c588f37388a837f255250de8c5ebf3"
+source = "git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware#0e379d172d2d93f15bdc98a794a95b214db154aa"
 dependencies = [
  "error-chain 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 8.0.2 (git+https://github.com/paritytech/jsonrpc.git?branch=td-callmiddleware)",

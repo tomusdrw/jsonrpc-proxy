@@ -40,6 +40,80 @@ pub fn params<M, S>() -> Vec<Param<Box<Configurator<M, S>>>> where
                 Ok(builder.threads(threads))
             })
         }),
+        param("rest-api", "disabled", r#"
+            Enables REST -> RPC converter for HTTP server. Allows you to
+            call RPC methods with `POST /<methodname>/<param1>/<param2>`.
+            The "secure" option requires the `Content-Type: application/json`
+            header to be sent with the request (even though the payload is ignored)
+            to prevent accepting POST requests from any website (via form submission).
+            The "unsecure" option does not require any `Content-Type`.
+            Possible options: "unsecure", "secure", "disabled"."#,
+            |value| {
+                let api = match value.as_str() {
+                    "disabled" | "off" | "no" => http::RestApi::Disabled,
+                    "secure" | "on" | "yes" => http::RestApi::Secure,
+                    "unsecure" => http::RestApi::Unsecure,
+                    _ => return Err(format!("Invalid value for rest-api: {}", value)),
+                };
+                Ok(move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
+                    Ok(builder.rest_api(api))
+                })
+            }
+        ),
+        param("hosts", "none", r#"
+            List of allowed Host header values. This option will
+            validate the Host header sent by the browser, it is
+            additional security against some attack vectors. Special
+            options: "all", "none"."#,
+            |value| {
+                let hosts = match value.as_str() {
+                    "none" => Some(vec![]),
+                    "*" | "all" | "any" => None,
+                    _ => Some(value.split(',').map(Into::into).collect()),
+                };
+                Ok(move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
+                    Ok(builder.allowed_hosts(hosts.clone().into()))
+                })
+            }
+        ),
+        param("cors", "none", r#"
+            Specify CORS header for HTTP JSON-RPC API responses.
+            Special options: "all", "null", "none"."#,
+            |value| {
+                let cors = match value.as_str() {
+                    "none" => Some(vec![]),
+                    "*" | "all" | "any" => None,
+                    _ => Some(value.split(',').map(Into::into).collect()),
+                };
+
+                Ok(move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
+                    Ok(builder.cors(cors.clone().into()))
+                })
+            }
+        ),
+        param("cors-max-age", "3600000", r#"Configures AccessControlMaxAge header value in milliseconds.
+            Informs the client that the preflight request is not required for the specified time. Use 0 to disable.
+        "#,
+            |value| {
+                let cors_max_age: u32 = value.parse().map_err(|e| format!("Invalid cors max age {}: {}", value, e))?;
+
+                Ok(move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
+                    Ok(builder.cors_max_age(if cors_max_age == 0 {
+                        None
+                    } else {
+                        Some(cors_max_age)
+                    }))
+                })
+            }
+        ),
+        param("max-payload", "5", "Maximal HTTP server payload in Megabytes.",
+            |value| {
+                let max_payload: usize = value.parse().map_err(|e| format!("Invalid maximal payload size ({}): {}", value, e))?;
+                Ok(move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
+                    Ok(builder.max_request_body_size(max_payload * 1024 * 1024))
+                })
+            }
+        ),
     ]
 }
 
