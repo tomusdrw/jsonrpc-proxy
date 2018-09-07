@@ -1,0 +1,7 @@
+{
+  "pubsubMethods": [{
+    "subscribe": "state_subscribeStorage",
+    "unsubscribe": "state_unsubscibeStorage",
+    "name": "state_storage"
+  }]
+}

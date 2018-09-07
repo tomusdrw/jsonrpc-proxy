@@ -5,10 +5,14 @@
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]
 
+extern crate cli_params;
 extern crate jsonrpc_core as rpc;
 extern crate jsonrpc_pubsub as pubsub;
 extern crate parking_lot;
 extern crate serde_json;
+
+#[macro_use]
+extern crate serde_derive;
 
 #[macro_use]
 extern crate log;
@@ -23,11 +27,12 @@ use rpc::{
     futures::future::Either,
 };
 
+pub mod config;
 pub mod helpers;
 pub mod shared;
 
 /// Represents a Pub-Sub method description.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Subscription {
     /// Subscribe method name.
     pub subscribe: String,
@@ -80,8 +85,15 @@ impl<T> Middleware<T> {
     /// Create new passthrough middleware with given upstream and the list of pubsub methods.
     pub fn new(
         transport: T,
-        pubsub_methods: Vec<Subscription>,
+        params: &[config::Param],
     ) -> Self {
+        let mut pubsub_methods = vec![];
+        for p in params {
+            match p {
+                config::Param::PubSubMethods(ref m) => pubsub_methods.extend(m.clone()),
+            }
+        }
+
         Self {
             transport,
             subscribe_methods: pubsub_methods.iter().map(|s| (s.subscribe.clone(), s.clone())).collect(),

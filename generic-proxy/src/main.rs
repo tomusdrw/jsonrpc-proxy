@@ -35,15 +35,12 @@ fn handler<T: upstream::Transport>(
     transport: T,
     cache_params: &[simple_cache::config::Param],
     permissioning_params: &[permissioning::config::Param],
+    upstream_params: &[upstream::config::Param],
 ) -> rpc::MetaIoHandler<Metadata, Middleware<T>> {
     rpc::MetaIoHandler::with_middleware((
         permissioning::Middleware::new(permissioning_params),
         simple_cache::Middleware::new(cache_params),
-        upstream::Middleware::new(transport, vec![upstream::Subscription {
-            subscribe: "state_subscribeStorage".into(),
-            unsubscribe: "state_unsubscribeStorage".into(),
-            name: "state_storage".into(),
-        }]),
+        upstream::Middleware::new(transport, upstream_params),
     ))
 }
 
@@ -64,8 +61,10 @@ fn main() {
     let ipc_params = transports::ipc::params();
     let app = cli::configure_app(app, &ipc_params);
 
-    let upstream_params = ws_upstream::config::params();
+    let upstream_params = upstream::config::params();
     let app = cli::configure_app(app, &upstream_params);
+    let ws_upstream_params = ws_upstream::config::params();
+    let app = cli::configure_app(app, &ws_upstream_params);
 
     let cache_params = simple_cache::config::params();
     let app = cli::configure_app(app, &cache_params);
@@ -81,6 +80,7 @@ fn main() {
     let tcp_params = cli::parse_matches(&matches, &tcp_params).unwrap();
     let ipc_params = cli::parse_matches(&matches, &ipc_params).unwrap();
     let upstream_params = cli::parse_matches(&matches, &upstream_params).unwrap();
+    let ws_upstream_params = cli::parse_matches(&matches, &ws_upstream_params).unwrap();
     let cache_params = cli::parse_matches(&matches, &cache_params).unwrap();
     let permissioning_params = cli::parse_matches(&matches, &permissioning_params).unwrap();
 
@@ -88,11 +88,10 @@ fn main() {
     let mut event_loop = tokio_core::reactor::Core::new().unwrap();
     let transport = ws_upstream::WebSocket::new(
         &event_loop.handle(),
-        upstream_params,
+        ws_upstream_params,
     ).unwrap();
 
-
-    let h = || handler(transport.clone(), &cache_params, &permissioning_params);
+    let h = || handler(transport.clone(), &cache_params, &permissioning_params, &upstream_params);
     let _server1 = transports::ws::start(ws_params, h()).unwrap();
     let _server2 = transports::http::start(http_params, h()).unwrap();
     let _server3 = transports::tcp::start(tcp_params, h()).unwrap();
