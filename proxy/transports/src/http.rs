@@ -41,13 +41,13 @@ pub fn params<M, S>() -> Vec<Param<Box<Configurator<M, S>>>> where
             })
         }),
         param("rest-api", "disabled", r#"
-            Enables REST -> RPC converter for HTTP server. Allows you to
-            call RPC methods with `POST /<methodname>/<param1>/<param2>`.
-            The "secure" option requires the `Content-Type: application/json`
-            header to be sent with the request (even though the payload is ignored)
-            to prevent accepting POST requests from any website (via form submission).
-            The "unsecure" option does not require any `Content-Type`.
-            Possible options: "unsecure", "secure", "disabled"."#,
+Enables REST -> RPC converter for HTTP server. Allows you to
+call RPC methods with `POST /<methodname>/<param1>/<param2>`.
+The "secure" option requires the `Content-Type: application/json`
+header to be sent with the request (even though the payload is ignored)
+to prevent accepting POST requests from any website (via form submission).
+The "unsecure" option does not require any `Content-Type`.
+Possible options: "unsecure", "secure", "disabled"."#,
             |value| {
                 let api = match value.as_str() {
                     "disabled" | "off" | "no" => http::RestApi::Disabled,
@@ -61,10 +61,10 @@ pub fn params<M, S>() -> Vec<Param<Box<Configurator<M, S>>>> where
             }
         ),
         param("hosts", "none", r#"
-            List of allowed Host header values. This option will
-            validate the Host header sent by the browser, it is
-            additional security against some attack vectors. Special
-            options: "all", "none"."#,
+List of allowed Host header values. This option will
+validate the Host header sent by the browser, it is
+additional security against some attack vectors. Special
+options: "all", "none"."#,
             |value| {
                 let hosts = match value.as_str() {
                     "none" => Some(vec![]),
@@ -77,8 +77,8 @@ pub fn params<M, S>() -> Vec<Param<Box<Configurator<M, S>>>> where
             }
         ),
         param("cors", "none", r#"
-            Specify CORS header for HTTP JSON-RPC API responses.
-            Special options: "all", "null", "none"."#,
+Specify CORS header for HTTP JSON-RPC API responses.
+Special options: "all", "null", "none"."#,
             |value| {
                 let cors = match value.as_str() {
                     "none" => Some(vec![]),
@@ -92,8 +92,7 @@ pub fn params<M, S>() -> Vec<Param<Box<Configurator<M, S>>>> where
             }
         ),
         param("cors-max-age", "3600000", r#"Configures AccessControlMaxAge header value in milliseconds.
-            Informs the client that the preflight request is not required for the specified time. Use 0 to disable.
-        "#,
+Informs the client that the preflight request is not required for the specified time. Use 0 to disable."#,
             |value| {
                 let cors_max_age: u32 = value.parse().map_err(|e| format!("Invalid cors max age {}: {}", value, e))?;
 
@@ -147,7 +146,7 @@ fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser:
     Param {
         category: CATEGORY.into(),
         name: format!("{}-{}", PREFIX, name),
-        description: description.into(),
+        description: description.replace('\n', ""),
         default_value: default_value.into(),
         parser: Box::new(move |val: String| {
             Ok(Box::new(parser(val)?) as _)

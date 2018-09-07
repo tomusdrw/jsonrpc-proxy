@@ -32,7 +32,46 @@ pub fn params<M, S>() -> Vec<Param<Box<Configurator<M, S>>>> where
                 address.set_ip(ip.into());
                 Ok(builder)
             })
-        })
+        }),
+        param("hosts", "none", r#"
+List of allowed Host header values. This option will
+validate the Host header sent by the browser, it is
+additional security against some attack vectors. Special
+options: "all", "none"."#,
+            |value| {
+                let hosts = match value.as_str() {
+                    "none" => Some(vec![]),
+                    "*" | "all" | "any" => None,
+                    _ => Some(value.split(',').map(Into::into).collect()),
+                };
+                Ok(move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
+                    Ok(builder.allowed_hosts(hosts.clone().into()))
+                })
+            }
+        ),
+        param("origins", "none", r#"
+Specify Origin header values allowed to connect. Special
+options: "all", "none". "#,
+            |value| {
+                let origins = match value.as_str() {
+                    "none" => Some(vec![]),
+                    "*" | "all" | "any" => None,
+                    _ => Some(value.split(',').map(Into::into).collect()),
+                };
+
+                Ok(move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
+                    Ok(builder.allowed_origins(origins.clone().into()))
+                })
+            }
+        ),
+        param("max-connections", "100", "Maximum number of allowed concurrent WebSockets JSON-RPC connections.",
+            |value| {
+                let max_connections: usize = value.parse().map_err(|e| format!("Invalid number of connections {}: {}", value, e))?;
+                Ok(move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
+                    Ok(builder.max_connections(max_connections))
+                })
+            }
+        ),
     ]
 }
  
@@ -88,7 +127,7 @@ fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser:
     Param {
         category: CATEGORY.into(),
         name: format!("{}-{}", PREFIX, name),
-        description: description.into(),
+        description: description.replace('\n', " "),
         default_value: default_value.into(),
         parser: Box::new(move |val: String| {
             Ok(Box::new(parser(val)?) as _)
