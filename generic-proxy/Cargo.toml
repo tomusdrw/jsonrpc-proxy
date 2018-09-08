@@ -15,3 +15,11 @@ tokio-core = "0.1"
 transports = { path = "../proxy/transports" }
 upstream = { path = "../plugins/upstream" }
 ws-upstream = { path = "../plugins/ws-upstream" }
+
+[[bin]]
+name = "rpc-proxy"
+path = "bin/rpc-proxy.rs"
+
+[lib]
+name = "generic_proxy"
+path = "src/lib.rs"

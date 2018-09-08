@@ -6,9 +6,7 @@
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]
 
-#[macro_use]
 extern crate clap;
-
 extern crate cli;
 extern crate env_logger;
 extern crate jsonrpc_core as rpc;
@@ -44,12 +42,14 @@ fn handler<T: upstream::Transport>(
     ))
 }
 
-fn main() {
+/// Run app with additional cache methods and upstream subscriptions.
+pub fn run_app(
+    app: App,
+    simple_cache_methods: Vec<simple_cache::Method>,
+    upstream_subscriptions: Vec<upstream::Subscription>,
+) {
     env_logger::init();
     let args = ::std::env::args_os();
-
-    let yml = load_yaml!("./cli.yml");
-    let app = App::from_yaml(yml).set_term_width(80);
 
     // TODO [ToDr] Configure other app options]
     let ws_params = transports::ws::params();
@@ -72,16 +72,17 @@ fn main() {
     let permissioning_params = permissioning::config::params();
     let app = cli::configure_app(app, &permissioning_params);
 
-
     // Parse matches
     let matches = app.get_matches_from(args);
     let ws_params = cli::parse_matches(&matches, &ws_params).unwrap();
     let http_params = cli::parse_matches(&matches, &http_params).unwrap();
     let tcp_params = cli::parse_matches(&matches, &tcp_params).unwrap();
     let ipc_params = cli::parse_matches(&matches, &ipc_params).unwrap();
-    let upstream_params = cli::parse_matches(&matches, &upstream_params).unwrap();
+    let mut upstream_params = cli::parse_matches(&matches, &upstream_params).unwrap();
+    upstream::config::add_subscriptions(&mut upstream_params, upstream_subscriptions);
     let ws_upstream_params = cli::parse_matches(&matches, &ws_upstream_params).unwrap();
-    let cache_params = cli::parse_matches(&matches, &cache_params).unwrap();
+    let mut cache_params = cli::parse_matches(&matches, &cache_params).unwrap();
+    simple_cache::config::add_methods(&mut cache_params, simple_cache_methods);
     let permissioning_params = cli::parse_matches(&matches, &permissioning_params).unwrap();
 
     // Actually run the damn thing.

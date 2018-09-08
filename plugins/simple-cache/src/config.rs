@@ -33,6 +33,17 @@ pub fn params() -> Vec<cli_params::Param<Param>> {
     ]
 }
 
+/// Add methods given as the first parameter to the config in one of the params.
+pub fn add_methods(params: &mut [Param], methods: Vec<Method>) {
+    for p in params {
+        match p {
+            Param::CachedMethods(ref mut config) => {
+                config.methods.extend(methods.clone());
+            }
+        }
+    }
+}
+
 /// Cache configuration
 #[derive(Clone, Deserialize)]
 pub struct Cache {
@@ -56,6 +67,6 @@ mod tests {
 
     #[test]
     fn should_deserialize_example() {
-        let _m: CacheMethods = serde_json::from_slice(include_bytes!("../../../examples/cache.json")).unwrap();
+        let _m: Cache = serde_json::from_slice(include_bytes!("../../../examples/cache.json")).unwrap();
     }
 }

@@ -34,6 +34,17 @@ pub fn params() -> Vec<cli_params::Param<Param>> {
     ]
 }
 
+/// Adds pubsub methods definitions to the existing parameter.
+pub fn add_subscriptions(params: &mut [Param], methods: Vec<Subscription>) {
+    for p in params {
+        match p {
+            Param::PubSubMethods(ref mut m) => {
+                m.extend(methods.clone());
+            }
+        }
+    }
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all="camelCase")]
 struct Upstream {

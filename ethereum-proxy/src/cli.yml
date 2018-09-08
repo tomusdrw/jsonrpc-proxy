@@ -1,0 +1,5 @@
+name: ethereum-proxy
+version: "0.1"
+about: Ethereum JSON-RPC proxy.
+author: Parity Technologies Ltd <admin@parity.io>
+
