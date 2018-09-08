@@ -150,3 +150,120 @@ fn get_call_details(call: rpc::Call) -> (Option<rpc::Version>, Option<rpc::Id>) 
         rpc::Call::Invalid { id, .. } => (None, Some(id)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use rpc::Middleware as MiddlewareTrait;
+    use std::sync::{atomic, Arc};
+    use super::*;
+
+    fn callback() -> (impl FnOnce(rpc::Call, ()) -> rpc::futures::future::FutureResult<Option<rpc::Output>, ()>, Arc<atomic::AtomicBool>) {
+        let called = Arc::new(atomic::AtomicBool::new(false));
+        let called2 = called.clone();
+        let next = move |_, _| {
+            called2.store(true, atomic::Ordering::SeqCst);
+            rpc::futures::future::ok(None)
+        };
+
+        (next, called)
+    }
+
+    fn method_call(name: &str) -> rpc::Call {
+        rpc::Call::MethodCall(rpc::MethodCall {
+            id: rpc::Id::Num(1),
+            jsonrpc: Some(rpc::Version::V2),
+            method: name.into(),
+            params: rpc::Params::Array(vec![]),
+        })
+    }
+
+    fn middleware(config: Permissioning) -> Middleware {
+        Middleware::new(&[
+            config::Param::Config(config)
+        ])
+    }
+
+    fn not_allowed() -> Option<rpc::Output> {
+        Some(rpc::Output::Failure(rpc::Failure {
+            id: rpc::Id::Num(1),
+            error: rpc::Error {
+                code: rpc::ErrorCode::ServerError(-1),
+                message: "You are not allowed to call that method.".into(),
+                data: None,
+            },
+            jsonrpc: Some(rpc::Version::V2),
+
+        }))
+    }
+
+    #[test]
+    fn should_allow_method_by_global_policy() {
+        // given
+        let middleware = middleware(Default::default());
+        let (next, called) = callback();
+
+        // when
+        let result = middleware.on_call(method_call("eth_getBlock"), (), next);
+
+        // then
+        assert_eq!(called.load(atomic::Ordering::SeqCst), true);
+        assert_eq!(result.wait(), Ok(None));
+    }
+
+    #[test]
+    fn should_deny_blacklisted_method() {
+        // given
+        let middleware = middleware(Permissioning {
+            policy: Access::Allow,
+            methods: vec![Method {
+                name: "eth_getBlock".into(),
+                policy: Access::Deny,
+            }],
+        });
+        let (next, called) = callback();
+
+        // when
+        let result = middleware.on_call(method_call("eth_getBlock"), (), next);
+
+        // then
+        assert_eq!(called.load(atomic::Ordering::SeqCst), false);
+        assert_eq!(result.wait(), Ok(not_allowed()));
+    }
+
+    #[test]
+    fn should_deny_method_by_global_policy() {
+        // given
+        let middleware = middleware(Permissioning {
+            policy: Access::Deny,
+            methods: vec![],
+        });
+        let (next, called) = callback();
+        
+         // when
+        let result = middleware.on_call(method_call("eth_getBlock"), (), next);
+
+        // then
+        assert_eq!(called.load(atomic::Ordering::SeqCst), false);
+        assert_eq!(result.wait(), Ok(not_allowed()));
+    }
+
+    #[test]
+    fn should_allow_whitelisted_method() {
+        // given
+        let middleware = middleware(Permissioning {
+            policy: Access::Deny,
+            methods: vec![Method {
+                name: "eth_getBlock".into(),
+                policy: Access::Allow,
+            }],
+        });
+        let (next, called) = callback();
+
+        // when
+        let result = middleware.on_call(method_call("eth_getBlock"), (), next);
+
+        // then
+        assert_eq!(called.load(atomic::Ordering::SeqCst), true);
+        assert_eq!(result.wait(), Ok(None));
+    }
+}
