@@ -51,7 +51,6 @@ pub fn run_app(
     env_logger::init();
     let args = ::std::env::args_os();
 
-    // TODO [ToDr] Configure other app options]
     let ws_params = transports::ws::params();
     let app = cli::configure_app(app, &ws_params);
     let http_params = transports::http::params();
