@@ -3,7 +3,6 @@
   "methods": [
     {
       "name": "chain_getBlock",
-      "params": "ignoreParams",
       "eviction": {
         "time": {
           "secs": 50000,

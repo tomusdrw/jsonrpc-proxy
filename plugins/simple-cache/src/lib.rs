@@ -17,7 +17,8 @@ extern crate twox_hash;
 extern crate serde_derive;
 
 use std::{
-    collections::HashMap,
+    io,
+    hash::{Hash as HashTrait, Hasher},
     sync::Arc,
     time,
 };
@@ -28,17 +29,9 @@ use rpc::{
 };
 use parking_lot::RwLock;
 
-type Hash = String;
+type Hash = u64;
 
 pub mod config;
-
-/// Describes what parameters should have separate caches.
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum ParamsCache {
-    /// Parameters for the method doesn't matter. Cache only by method name.
-    IgnoreParams,
-}
 
 /// Cache eviction policy
 #[derive(Clone, Debug, Deserialize)]
@@ -62,29 +55,24 @@ enum MethodMeta {
 #[derive(Clone, Debug, Deserialize)]
 pub struct Method {
     name: String,
-    params: ParamsCache,
     eviction: CacheEviction,
 }
 
 impl Method {
     /// Create new method.
-    pub fn new<T: Into<String>>(name: T, params: ParamsCache, eviction: CacheEviction) -> Self {
+    pub fn new<T: Into<String>>(name: T, eviction: CacheEviction) -> Self {
         Method {
             name: name.into(),
-            params,
             eviction,
         }
     }
 
-    /// Ignore parameters when caching.
-    pub fn ignore_params<T: Into<String>>(name: T) -> Self {
-        Self::new(name, ParamsCache::IgnoreParams, CacheEviction::Time(time::Duration::from_secs(5)))
-    }
-
     /// Returns a hash of parameters of this method.
-    fn hash(&self, _parameters: &rpc::Params) -> Hash {
-        // TODO [ToDr] Should take parameters into account
-        self.name.clone()
+    fn hash(&self, parameters: &rpc::Params) -> Hash {
+        let mut hasher = twox_hash::XxHash::default();
+        self.name.hash(&mut hasher);
+        serde_json::to_writer(HashWriter(&mut hasher), parameters).expect("HashWriter never fails.");
+        hasher.finish()
     }
 
     /// Generates metadata that should be stored in the cache together with the value.
@@ -110,10 +98,9 @@ impl Method {
 pub struct Middleware {
     enabled: bool,
     cacheable: FnvHashMap<String, Method>,
-    cached: Arc<RwLock<HashMap<
+    cached: Arc<RwLock<FnvHashMap<
         Hash, 
         (Option<rpc::Output>, MethodMeta),
-        ::twox_hash::RandomXxHashBuilder
     >>>,
 }
 
@@ -125,7 +112,7 @@ impl Middleware {
         let mut cache = config::Cache::default();
         for p in params {
             match p {
-                config::Param::CachedMethods(ref m) => cache = m.clone(),
+                config::Param::Config(ref m) => cache = m.clone(),
             }
         }
 
@@ -204,7 +191,159 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     }
 }
 
+struct HashWriter<'a, W: 'a>(&'a mut W);
+
+impl<'a, W: 'a + Hasher> io::Write for HashWriter<'a, W> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        buf.hash(self.0);
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::sync::{atomic, Arc};
+    use rpc::Middleware as MiddlewareTrait;
+    use super::*;
+
+    fn callback() -> (impl Fn(rpc::Call, ()) -> rpc::futures::future::FutureResult<Option<rpc::Output>, ()>, Arc<atomic::AtomicUsize>) {
+        let called = Arc::new(atomic::AtomicUsize::new(0));
+        let called2 = called.clone();
+        let next = move |_, _| {
+            called2.fetch_add(1, atomic::Ordering::SeqCst);
+            rpc::futures::future::ok(None)
+        };
+
+        (next, called)
+    }
+
+    fn method_call(name: &str, param: &str) -> rpc::Call {
+        rpc::Call::MethodCall(rpc::MethodCall {
+            id: rpc::Id::Num(1),
+            jsonrpc: Some(rpc::Version::V2),
+            method: name.into(),
+            params: rpc::Params::Array(vec![param.into()]),
+        })
+    }
+
+    fn middleware(config: config::Cache) -> Middleware {
+        Middleware::new(&[
+            config::Param::Config(config)
+        ])
+    }
+
+    #[test]
+    fn should_forward_if_cache_disabled() {
+        // given
+        let middleware = middleware(config::Cache {
+            enabled: false,
+            methods: vec![
+                Method::new("eth_getBlock", CacheEviction::Time(time::Duration::from_secs(1))),
+            ],
+        });
+        let (next, called) = callback();
+
+        // when
+        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+
+        // then
+        assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
+        assert_eq!(res1, Ok(None));
+        assert_eq!(res2, Ok(None));
+    }
+
+    #[test]
+    fn should_return_cached_result() {
+        // given
+        let middleware = middleware(config::Cache {
+            enabled: true,
+            methods: vec![
+                Method::new("eth_getBlock", CacheEviction::Time(time::Duration::from_secs(1))),
+            ],
+        });
+        let (next, called) = callback();
+
+        // when
+        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+
+        // then
+        assert_eq!(called.load(atomic::Ordering::SeqCst), 1);
+        assert_eq!(res1, Ok(None));
+        assert_eq!(res2, Ok(None));
+    }
+
+    #[test]
+    fn should_not_cache_when_params_different() {
+        // given
+        let middleware = middleware(config::Cache {
+            enabled: true,
+            methods: vec![
+                Method::new("eth_getBlock", CacheEviction::Time(time::Duration::from_secs(1))),
+            ],
+        });
+        let (next, called) = callback();
+
+        // when
+        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz1"), (), &next).wait();
+        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz2"), (), &next).wait();
+
+        // then
+        assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
+        assert_eq!(res1, Ok(None));
+        assert_eq!(res2, Ok(None));
+    }
+
+    #[test]
+    fn should_invalidate_cache_after_specified_time() {
+        // given
+        let middleware = middleware(config::Cache {
+            enabled: true,
+            methods: vec![
+                Method::new("eth_getBlock", CacheEviction::Time(time::Duration::from_millis(1))),
+            ],
+        });
+        let (next, called) = callback();
+
+        // when
+        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+        ::std::thread::sleep(time::Duration::from_millis(2));
+        let res3 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+
+        // then
+        assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
+        assert_eq!(res1, Ok(None));
+        assert_eq!(res2, Ok(None));
+        assert_eq!(res3, Ok(None));
+    }
+
+    // TODO [ToDr] Implement me
+    #[ignore]
+    #[test]
+    fn should_never_send_request_twice() {
+        // given
+        let middleware = middleware(config::Cache {
+            enabled: true,
+            methods: vec![
+                Method::new("eth_getBlock", CacheEviction::Time(time::Duration::from_secs(1))),
+            ],
+        });
+        let (next, called) = callback();
+
+        // when
+        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next);
+        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next);
+
+        // then
+        assert_eq!(called.load(atomic::Ordering::SeqCst), 1);
+        assert_eq!(res1.wait(), Ok(None));
+        assert_eq!(res2.wait(), Ok(None));
+    }
 
 }

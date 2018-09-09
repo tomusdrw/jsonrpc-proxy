@@ -8,7 +8,7 @@ use Method;
 /// A configuration option to apply.
 pub enum Param {
     /// Methods that should be cached.
-    CachedMethods(Cache),
+    Config(Cache),
 }
 
 /// Returns a list of supported configuration parameters.
@@ -21,13 +21,13 @@ pub fn params() -> Vec<cli_params::Param<Param>> {
             "-",
             |path: String| {
                 if &path == "-" {
-                    return Ok(Param::CachedMethods(Default::default()))
+                    return Ok(Param::Config(Default::default()))
                 }
 
                 let file = fs::File::open(&path).map_err(|e| format!("Can't open cache file at {}: {:?}", path, e))?;
                 let buf_file = io::BufReader::new(file);
                 let methods: Cache = serde_json::from_reader(buf_file).map_err(|e| format!("Invalid JSON at {}: {:?}", path, e))?;
-                Ok(Param::CachedMethods(methods))
+                Ok(Param::Config(methods))
             }
         )
     ]
@@ -37,7 +37,7 @@ pub fn params() -> Vec<cli_params::Param<Param>> {
 pub fn add_methods(params: &mut [Param], methods: Vec<Method>) {
     for p in params {
         match p {
-            Param::CachedMethods(ref mut config) => {
+            Param::Config(ref mut config) => {
                 config.methods.extend(methods.clone());
             }
         }

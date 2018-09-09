@@ -98,7 +98,6 @@ fn main() {
 fn cache(name: &str) -> simple_cache::Method {
     simple_cache::Method::new(
         name, 
-        simple_cache::ParamsCache::IgnoreParams, 
         simple_cache::CacheEviction::Time(::std::time::Duration::from_secs(3)),
     )
 }
