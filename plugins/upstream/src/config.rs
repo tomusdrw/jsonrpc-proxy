@@ -50,3 +50,13 @@ pub fn add_subscriptions(params: &mut [Param], methods: Vec<Subscription>) {
 struct Upstream {
     pubsub_methods: Vec<Subscription>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_deserialize_example_configuration() {
+        let _m: Upstream = serde_json::from_slice(include_bytes!("../../../examples/upstream.json")).unwrap();
+    }
+}

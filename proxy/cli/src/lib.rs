@@ -9,7 +9,6 @@ extern crate cli_params as params;
 /// Adds plugin parameters to the CLI application.
 pub fn configure_app<'a, 'b, Exec>(mut app: clap::App<'a, 'b>, params: &'a [params::Param<Exec>]) -> clap::App<'a, 'b> {
     for p in params {
-        // TODO [ToDr] Use prefix
         app = app.arg(clap::Arg::with_name(&p.name)
             .long(&p.name)
             .takes_value(true)
