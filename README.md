@@ -1,6 +1,26 @@
 jsonrpc-proxy
 =================================
 
+# Overview
+
+The proxy has a pluggable architecture of middlewares. Each middleware receives every RPC call and can decide to either terminate it (return a response) or pass it forward to the next middleware. Middlewares are also able to modify the response object.
+
+As the last middleware we are using `Upstream` middleware, which is responsible for calling the target node.
+
+Middlewares included in this repo:
+
+- Simple caching middleware
+- Simple permissioning middleware
+- WebSockets upstream middleware
+
+Similarly pluggable are JSON-RPC transports that the proxy exposes. Currently supported:
+- TCP server
+- HTTP server
+- IPC server
+- WebSockets server
+
+![Proxy Overview](./overview.svg)
+
 # Ideas
 
 - [ ] Rate Limitting
