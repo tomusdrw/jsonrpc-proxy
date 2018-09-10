@@ -1,0 +1,5 @@
+name: substrate-proxy
+version: "0.1"
+about: Substrate JSON-RPC proxy.
+author: Parity Technologies Ltd <admin@parity.io>
+
