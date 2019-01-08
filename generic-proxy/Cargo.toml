@@ -7,8 +7,8 @@ authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 clap = { version = "2.32", features = ["yaml"] }
 cli = { path = "../proxy/cli" }
 env_logger = "0.5"
-jsonrpc-core = { git="https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware" }
-jsonrpc-pubsub = { git="https://github.com/paritytech/jsonrpc.git", branch = "td-callmiddleware" }
+jsonrpc-core = { git="https://github.com/paritytech/jsonrpc.git"}
+jsonrpc-pubsub = { git="https://github.com/paritytech/jsonrpc.git"}
 permissioning = { path = "../plugins/permissioning" }
 simple-cache = { path = "../plugins/simple-cache" }
 tokio-core = "0.1"
