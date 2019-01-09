@@ -11,7 +11,7 @@ jsonrpc-core = { git="https://github.com/paritytech/jsonrpc.git"}
 jsonrpc-pubsub = { git="https://github.com/paritytech/jsonrpc.git"}
 permissioning = { path = "../plugins/permissioning" }
 simple-cache = { path = "../plugins/simple-cache" }
-tokio-core = "0.1"
+tokio = "0.1"
 transports = { path = "../proxy/transports" }
 upstream = { path = "../plugins/upstream" }
 ws-upstream = { path = "../plugins/ws-upstream" }

@@ -8,7 +8,7 @@ extern crate jsonrpc_core as rpc;
 extern crate jsonrpc_pubsub as pubsub;
 extern crate serde_json;
 extern crate websocket;
-extern crate tokio_core;
+extern crate tokio;
 extern crate upstream;
 
 #[macro_use]
@@ -35,7 +35,6 @@ use websocket::{
     OwnedMessage,
     url::Url,
 };
-use tokio_core::reactor;
 
 struct WebSocketHandler {
     shared: Arc<Shared>,
@@ -112,7 +111,7 @@ pub struct WebSocket {
 impl WebSocket {
     /// Create new WebSocket transport within existing Event Loop.
     pub fn new(
-        handle: &reactor::Handle,
+        runtime: &mut tokio::runtime::current_thread::Runtime,
         params: Vec<config::Param>,
     ) -> Result<Self, String> {
 
@@ -138,7 +137,7 @@ impl WebSocket {
             };
 
             ClientBuilder::from_url(&url)
-                .async_connect_insecure(handle)
+                .async_connect_insecure()
                 .map(|(duplex, _)| duplex.split())
                 .map_err(|e| format!("{:?}", e))
                 .and_then(move |(sink, stream)| {
@@ -158,7 +157,7 @@ impl WebSocket {
                 })
         };
 
-        handle.spawn(ws_future.map(|_| ()).map_err(|err| {
+        runtime.spawn(ws_future.map(|_| ()).map_err(|err| {
             error!("WebSocketError: {:?}", err);
         }));
 
