@@ -11,13 +11,16 @@ extern crate cli;
 extern crate env_logger;
 extern crate jsonrpc_core as rpc;
 extern crate jsonrpc_pubsub;
-extern crate tokio_core;
 
 extern crate permissioning;
 extern crate simple_cache;
 extern crate transports;
 extern crate upstream;
 extern crate ws_upstream;
+
+extern crate tokio;
+
+use tokio::runtime::current_thread::Runtime;
 
 use std::sync::Arc;
 use clap::App;
@@ -85,9 +88,9 @@ pub fn run_app(
     let permissioning_params = cli::parse_matches(&matches, &permissioning_params).unwrap();
 
     // Actually run the damn thing.
-    let mut event_loop = tokio_core::reactor::Core::new().unwrap();
+    let mut runtime = Runtime::new().unwrap();
     let transport = ws_upstream::WebSocket::new(
-        &event_loop.handle(),
+        &mut runtime,
         ws_upstream_params,
     ).unwrap();
 
@@ -97,7 +100,5 @@ pub fn run_app(
     let _server3 = transports::tcp::start(tcp_params, h()).unwrap();
     let _server4 = transports::ipc::start(ipc_params, h()).unwrap();
 
-    loop {
-        event_loop.turn(None);
-    }
+    runtime.run().unwrap();
 }
