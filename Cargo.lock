@@ -365,6 +365,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "ipc-upstream"
+version = "0.1.0"
+dependencies = [
+ "cli-params 0.1.0",
+ "jsonrpc-core 9.0.0 (git+https://github.com/paritytech/jsonrpc.git)",
+ "jsonrpc-pubsub 9.0.0 (git+https://github.com/paritytech/jsonrpc.git)",
+ "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.34 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tokio 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tokio-uds 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "upstream 0.1.0",
+]
+
+[[package]]
 name = "itoa"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -906,6 +920,7 @@ dependencies = [
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cli 0.1.0",
  "env_logger 0.5.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ipc-upstream 0.1.0",
  "jsonrpc-core 9.0.0 (git+https://github.com/paritytech/jsonrpc.git)",
  "jsonrpc-pubsub 9.0.0 (git+https://github.com/paritytech/jsonrpc.git)",
  "permissioning 0.1.0",

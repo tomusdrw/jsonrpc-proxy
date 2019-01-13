@@ -1,0 +1,14 @@
+[package]
+name = "ipc-upstream"
+version = "0.1.0"
+authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
+
+[dependencies]
+cli-params = { path = "../../proxy/cli-params" }
+jsonrpc-core = { git="https://github.com/paritytech/jsonrpc.git" }
+jsonrpc-pubsub = { git="https://github.com/paritytech/jsonrpc.git" }
+log = "0.4"
+serde_json = "1.0"
+tokio = "0.1"
+tokio-uds = "0.2.5"
+upstream = { path = "../upstream" }

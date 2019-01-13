@@ -17,13 +17,14 @@ extern crate simple_cache;
 extern crate transports;
 extern crate upstream;
 extern crate ws_upstream;
+extern crate ipc_upstream;
 
 extern crate tokio;
 
-use tokio::runtime::current_thread::Runtime;
-
 use std::sync::Arc;
 use clap::App;
+use rpc::futures::Future;
+use tokio::runtime::Runtime;
 
 type Metadata = Option<Arc<::jsonrpc_pubsub::Session>>;
 type Middleware<T> = (
@@ -67,6 +68,8 @@ pub fn run_app(
     let app = cli::configure_app(app, &upstream_params);
     let ws_upstream_params = ws_upstream::config::params();
     let app = cli::configure_app(app, &ws_upstream_params);
+    let ipc_upstream_params = ipc_upstream::config::params();
+    let app = cli::configure_app(app, &ipc_upstream_params);
 
     let cache_params = simple_cache::config::params();
     let app = cli::configure_app(app, &cache_params);
@@ -83,15 +86,22 @@ pub fn run_app(
     let mut upstream_params = cli::parse_matches(&matches, &upstream_params).unwrap();
     upstream::config::add_subscriptions(&mut upstream_params, upstream_subscriptions);
     let ws_upstream_params = cli::parse_matches(&matches, &ws_upstream_params).unwrap();
+    let ipc_upstream_params = cli::parse_matches(&matches, &ipc_upstream_params).unwrap();
     let mut cache_params = cli::parse_matches(&matches, &cache_params).unwrap();
     simple_cache::config::add_methods(&mut cache_params, simple_cache_methods);
     let permissioning_params = cli::parse_matches(&matches, &permissioning_params).unwrap();
 
     // Actually run the damn thing.
     let mut runtime = Runtime::new().unwrap();
-    let transport = ws_upstream::WebSocket::new(
+
+    // let transport = ws_upstream::WebSocket::new(
+    //     &mut runtime,
+    //     ws_upstream_params,
+    // ).unwrap();
+
+    let transport = ipc_upstream::IPC::new(
         &mut runtime,
-        ws_upstream_params,
+        ipc_upstream_params,
     ).unwrap();
 
     let h = || handler(transport.clone(), &cache_params, &permissioning_params, &upstream_params);
@@ -100,5 +110,5 @@ pub fn run_app(
     let _server3 = transports::tcp::start(tcp_params, h()).unwrap();
     let _server4 = transports::ipc::start(ipc_params, h()).unwrap();
 
-    runtime.run().unwrap();
+    runtime.shutdown_on_idle().wait().unwrap();
 }
