@@ -3,16 +3,10 @@
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]
 
-extern crate cli_params;
-extern crate jsonrpc_core as rpc;
-extern crate jsonrpc_pubsub as pubsub;
-extern crate serde_json;
-extern crate tokio;
-extern crate tokio_uds;
-extern crate upstream;
+use jsonrpc_core as rpc;
+use jsonrpc_pubsub as pubsub;
 
-#[macro_use]
-extern crate log;
+use log::{warn, trace, error};
 
 pub mod config;
 
