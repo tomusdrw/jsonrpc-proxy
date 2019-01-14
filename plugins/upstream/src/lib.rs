@@ -91,7 +91,6 @@ impl<T> Middleware<T> {
         for p in params {
             match p {
                 config::Param::PubSubMethods(ref m) => pubsub_methods.extend(m.clone()),
-                _ => {}
             }
         }
 

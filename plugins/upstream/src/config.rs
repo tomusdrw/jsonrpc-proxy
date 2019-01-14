@@ -9,18 +9,7 @@ use Subscription;
 #[derive(Clone, Debug)]
 pub enum Param {
     /// PublishSubscribe methods
-    PubSubMethods(Vec<Subscription>),
-    /// Transport used to communicate upstream
-    UpstreamTransport(Transport)
-}
-
-/// Upstream transports to choose from
-#[derive(Clone, Debug)]
-pub enum Transport {
-  /// WebSocket
-  WebSocket,
-  /// IPC (Unix Domain Socket)
-  IPC
+    PubSubMethods(Vec<Subscription>)
 }
 
 /// Returns all configuration parameters for WS upstream.
@@ -41,21 +30,6 @@ pub fn params() -> Vec<cli_params::Param<Param>> {
                 let config: Upstream = serde_json::from_reader(buf_file).map_err(|e| format!("Invalid JSON at {}: {:?}", path, e))?;
                 Ok(Param::PubSubMethods(config.pubsub_methods))
             },
-        ),
-        cli_params::Param::new(
-            "Upstream transport",
-            "upstream-transport",
-            "Define transport to use to communicate upstream. One of: ws, ipc.",
-            "ws",
-            move |transport: String| {
-              match transport.as_ref() {
-                "ws" => Ok(Param::UpstreamTransport(Transport::WebSocket)),
-                "ipc" => Ok(Param::UpstreamTransport(Transport::IPC)),
-                x => {
-                  Err(format!("Invalid upstream transport provided: {}. Must be one of: ws, ipc.", x))
-                }
-              }
-            },
         )
     ]
 }
@@ -67,7 +41,6 @@ pub fn add_subscriptions(params: &mut [Param], methods: Vec<Subscription>) {
             Param::PubSubMethods(ref mut m) => {
                 m.extend(methods.clone());
             }
-            _ => {}
         }
     }
 }
