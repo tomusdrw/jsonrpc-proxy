@@ -15,6 +15,7 @@ tokio = "0.1"
 transports = { path = "../proxy/transports" }
 upstream = { path = "../plugins/upstream" }
 ws-upstream = { path = "../plugins/ws-upstream" }
+ipc-upstream = { path = "../plugins/ipc-upstream" }
 
 [[bin]]
 name = "rpc-proxy"

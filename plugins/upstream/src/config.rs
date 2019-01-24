@@ -9,7 +9,7 @@ use Subscription;
 #[derive(Clone, Debug)]
 pub enum Param {
     /// PublishSubscribe methods
-    PubSubMethods(Vec<Subscription>),
+    PubSubMethods(Vec<Subscription>)
 }
 
 /// Returns all configuration parameters for WS upstream.

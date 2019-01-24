@@ -111,7 +111,7 @@ pub struct WebSocket {
 impl WebSocket {
     /// Create new WebSocket transport within existing Event Loop.
     pub fn new(
-        runtime: &mut tokio::runtime::current_thread::Runtime,
+        runtime: &mut tokio::runtime::Runtime,
         params: Vec<config::Param>,
     ) -> Result<Self, String> {
 
