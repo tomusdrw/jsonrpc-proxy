@@ -5,8 +5,8 @@ authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 
 [dependencies]
 cli-params = { path = "../../proxy/cli-params" }
-jsonrpc-core = { git="https://github.com/paritytech/jsonrpc.git" }
-jsonrpc-pubsub = { git="https://github.com/paritytech/jsonrpc.git" }
+jsonrpc-core = "10.1"
+jsonrpc-pubsub = "10.1"
 log = "0.4"
 serde_json = "1.0"
 tokio = "0.1"
