@@ -8,7 +8,7 @@ clap = { version = "2.32", features = ["yaml"] }
 cli = { path = "../proxy/cli" }
 env_logger = "0.5"
 jsonrpc-core = "10.1"
-jsonrpc-pubsub = "10.1"
+jsonrpc-pubsub = "12.1"
 permissioning = { path = "../plugins/permissioning" }
 simple-cache = { path = "../plugins/simple-cache" }
 tokio = "0.1"
