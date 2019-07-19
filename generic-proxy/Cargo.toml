@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 
 [dependencies]
-clap = { version = "2.32", features = ["yaml"] }
+clap = { version = "2.33", features = ["yaml"] }
 cli = { path = "../proxy/cli" }
 env_logger = "0.5"
 jsonrpc-core = "10.1"
