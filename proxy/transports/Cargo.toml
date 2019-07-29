@@ -7,7 +7,7 @@ authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 cli-params = { path = "../cli-params" }
 # TODO [ToDr] feature-gate transports.
 jsonrpc-core = "10.1"
-jsonrpc-http-server = "10.1"
+jsonrpc-http-server = "12.1"
 jsonrpc-ipc-server = "10.1"
 jsonrpc-pubsub = "12.1"
 jsonrpc-tcp-server = "10.1"
