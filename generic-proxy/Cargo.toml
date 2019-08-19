@@ -7,7 +7,7 @@ authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 clap = { version = "2.33", features = ["yaml"] }
 cli = { path = "../proxy/cli" }
 env_logger = "0.6"
-jsonrpc-core = "10.1"
+jsonrpc-core = "13.0"
 jsonrpc-pubsub = "13.0"
 permissioning = { path = "../plugins/permissioning" }
 simple-cache = { path = "../plugins/simple-cache" }
