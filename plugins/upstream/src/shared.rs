@@ -18,7 +18,7 @@ use rpc::{
 /// Pending request details
 pub type Pending = (oneshot::Sender<String>, PendingKind);
 /// A type of unsubscribe function
-pub type Unsubscribe = Box<Fn(pubsub::SubscriptionId) + Send>;
+pub type Unsubscribe = Box<dyn Fn(pubsub::SubscriptionId) + Send>;
 
 /// Pending request type
 pub enum PendingKind {

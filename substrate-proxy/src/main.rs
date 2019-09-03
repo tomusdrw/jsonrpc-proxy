@@ -57,7 +57,8 @@ fn main() {
                 unsubscribe: "state_unsubscribeStorage".into(),
                 name: "state_storage".into(),
             },
-        ]
+        ],
+        ()
     )
 }
 
@@ -67,4 +68,5 @@ fn cache(name: &str) -> simple_cache::Method {
         simple_cache::CacheEviction::Time(::std::time::Duration::from_secs(3)),
     )
 }
+
 

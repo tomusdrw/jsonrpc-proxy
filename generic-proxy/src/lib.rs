@@ -25,31 +25,57 @@ use tokio::runtime::current_thread::Runtime;
 use std::sync::Arc;
 use clap::App;
 
-type Metadata = Option<Arc<::jsonrpc_pubsub::Session>>;
-type Middleware<T> = (
+pub type Metadata = Option<Arc<::jsonrpc_pubsub::Session>>;
+
+type Middleware<T, E> = (
     permissioning::Middleware,
     simple_cache::Middleware,
+    E,
     upstream::Middleware<T>,
 );
 
-fn handler<T: upstream::Transport>(
+fn handler<T: upstream::Transport, E: rpc::Middleware<Metadata>>(
     transport: T,
+    extra: E,
     cache_params: &[simple_cache::config::Param],
     permissioning_params: &[permissioning::config::Param],
     upstream_params: &[upstream::config::Param],
-) -> rpc::MetaIoHandler<Metadata, Middleware<T>> {
+) -> rpc::MetaIoHandler<Metadata, Middleware<T, E>> {
     rpc::MetaIoHandler::with_middleware((
         permissioning::Middleware::new(permissioning_params),
         simple_cache::Middleware::new(cache_params),
+        extra,
         upstream::Middleware::new(transport, upstream_params),
     ))
 }
 
+/// TODO [ToDr] The whole thing is really shit.
+pub trait Extension {
+    type Middleware: rpc::Middleware<Metadata> + Clone;
+
+    fn configure_app<'a, 'b>(&'a mut self, app: clap::App<'a, 'b>) -> clap::App<'a, 'b>;
+
+    fn parse_matches(matches: &clap::ArgMatches, upstream: impl upstream::Transport) -> Self::Middleware;
+}
+
+impl Extension for () {
+    type Middleware = rpc::NoopMiddleware;
+
+    fn configure_app<'a, 'b>(&'a mut self, app: clap::App<'a, 'b>) -> clap::App<'a, 'b> {
+        app
+    }
+
+    fn parse_matches(_matches: &clap::ArgMatches, _upstream: impl upstream::Transport) -> Self::Middleware {
+        Default::default()
+    }
+}
+
 /// Run app with additional cache methods and upstream subscriptions.
-pub fn run_app(
+pub fn run_app<E: Extension>(
     app: App,
     simple_cache_methods: Vec<simple_cache::Method>,
     upstream_subscriptions: Vec<upstream::Subscription>,
+    mut extension: E,
 ) {
     env_logger::init();
     let args = ::std::env::args_os();
@@ -74,6 +100,8 @@ pub fn run_app(
     let permissioning_params = permissioning::config::params();
     let app = cli::configure_app(app, &permissioning_params);
 
+    let app = extension.configure_app(app);
+
     // Parse matches
     let matches = app.get_matches_from(args);
     let ws_params = cli::parse_matches(&matches, &ws_params).unwrap();
@@ -94,7 +122,14 @@ pub fn run_app(
         ws_upstream_params,
     ).unwrap();
 
-    let h = || handler(transport.clone(), &cache_params, &permissioning_params, &upstream_params);
+    let extra = E::parse_matches(&matches, transport.clone());
+    let h = || handler(
+        transport.clone(),
+        extra.clone(),
+        &cache_params,
+        &permissioning_params,
+        &upstream_params,
+    );
     let _server1 = transports::ws::start(ws_params, h()).unwrap();
     let _server2 = transports::http::start(http_params, h()).unwrap();
     let _server3 = transports::tcp::start(tcp_params, h()).unwrap();

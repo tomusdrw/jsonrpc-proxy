@@ -15,7 +15,7 @@ const CATEGORY: &str = "HTTP Server";
 const PREFIX: &str = "http";
 
 /// Returns CLI configuration options for the HTTP server.
-pub fn params<M, S>() -> Vec<Param<Box<Configurator<M, S>>>> where
+pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>> where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
 {
@@ -118,7 +118,7 @@ Informs the client that the preflight request is not required for the specified 
 
 /// Starts HTTP server on given handler.
 pub fn start<T, M, S>(
-    params: Vec<Box<Configurator<M, S>>>,
+    params: Vec<Box<dyn Configurator<M, S>>>,
     io: T,
 ) -> io::Result<http::Server> where
     T: Into<rpc::MetaIoHandler<M, S>>,
@@ -137,7 +137,7 @@ pub fn start<T, M, S>(
     builder.start_http(&address)
 }
 
-fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser: F) -> Param<Box<Configurator<M, S>>> where
+fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser: F) -> Param<Box<dyn Configurator<M, S>>> where
     F: Fn(String) -> Result<X, String> + 'static,
     X: Configurator<M, S> + 'static,
     M: rpc::Metadata,
