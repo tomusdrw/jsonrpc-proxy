@@ -12,6 +12,7 @@ use jsonrpc_core::{
     futures::future::{self, Either},
 };
 use ethsign::{SecretKey, Protected, KeyFile};
+use ethsign_transaction::{Bytes, SignTransaction, SignedTransaction, Transaction, U256};
 
 pub mod config;
 
@@ -70,36 +71,102 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
         X: Future<Item = Option<rpc::Output>, Error = ()> + Send + 'static, 
     {
         let secret = match self.secret.as_ref() {
-            Some(secret) => secret,
+            Some(secret) => secret.clone(),
             None => return Either::B(next(call, meta)),
         };
 
-        let (jsonrpc, id) = match &mut call {
-            &mut rpc::Call::MethodCall(rpc::MethodCall { ref mut method, ref jsonrpc, ref id, .. })
+        log::trace!("Parsing call: {:?}", call);
+        let (jsonrpc, id) = match call {
+            rpc::Call::MethodCall(rpc::MethodCall { ref mut method, ref jsonrpc, ref id, .. })
                 if method == "eth_sendTransaction" => {
                 *method = "parity_composeTransaction".into();
-                (jsonrpc.clone(), id.clone())
+                (*jsonrpc, id.clone())
             },
             _ => return Either::B(next(call, meta)),
         };
 
         // Get composed transaction
-        let res = next(call, meta);
+        let transaction_request = next(call, meta);
+        let chain_id = (self.upstream)(rpc::Call::MethodCall(rpc::MethodCall {
+            jsonrpc,
+            id: id.clone(),
+            method: "eth_chain_id".into(),
+            params: rpc::Params::Array(vec![]),
+        }));
         let upstream = self.upstream.clone();
-    
-        Either::A(Either::A(Box::new(res.and_then(move |output| {
-            let output = output.expect("Output always produced for `MethodCall`");
-                
-            // TODO [ToDr] Construct RLP and sign.
+        let res = transaction_request.join(chain_id).and_then(move |(request, chain_id)| {
+            const PROOF: &str = "Output always produced for `MethodCall`";
+            let err = |id, msg: &str| {
+                Either::A(future::ok(Some(rpc::Output::Failure(rpc::Failure {
+                    jsonrpc,
+                    id,
+                    error: rpc::Error {
+                        code: 1.into(),
+                        message: msg.into(),
+                        data: None,
+                    },
+                }))))
+            };
+            let request = match request.expect(PROOF) {
+                rpc::Output::Success(rpc::Success { result, .. }) => {
+                    log::trace!("Got composed: {:?}", result);
+                    match serde_json::from_value::<Transaction>(result) {
+                        Ok(tx) => tx,
+                        Err(e) => {
+                            log::error!("Unable to deserialize transaction request: {:?}", e);
+                            return err(id, "Unable to construct transaction")
+                        },
+                    }
+                },
+                o => return Either::A(future::ok(Some(o.into()))),
+            };
+            let chain_id = match chain_id.expect(PROOF) {
+                rpc::Output::Success(rpc::Success { result, .. }) => {
+                    log::trace!("Got chain_id: {:?}", result);
+                    match serde_json::from_value::<U256>(result) {
+                        Ok(id) => id.as_u64(),
+                        Err(e) => {
+                            log::error!("Unable to deserialize transaction request: {:?}", e);
+                            return err(id, "Unable to construct transaction")
+                        },
+                    }
+                },
+                o => return Either::A(future::ok(Some(o.into()))),
+            };
+            // Verify from
+            let public = secret.public();
+            let address = public.address();
+            let from = request.from;
+            if !from.is_zero() && from.as_bytes() != address {
+                log::error!("Expected to send from {:?}, but only support {:?}", from, address);
+                return err(id, "Invalid `from` address")
+            }
+            // Calculate unsigned hash
+            let hash = SignTransaction {
+                transaction: std::borrow::Cow::Borrowed(&request),
+                chain_id,
+            }.hash();
+            // Sign replay-protected hash.
+            let signature = secret.sign(&hash).unwrap();
+            // Construct signed RLP
+            let signed = SignedTransaction::new(
+                std::borrow::Cow::Owned(request),
+                chain_id,
+                signature.v,
+                signature.r,
+                signature.s
+            );
+            let rlp = Bytes(signed.to_rlp());
 
-            let rlp = "0x".into();
-
-            (upstream)(rpc::Call::MethodCall(rpc::MethodCall {
+            Either::B((upstream)(rpc::Call::MethodCall(rpc::MethodCall {
                 jsonrpc,
                 id,
                 method: "eth_sendRawTransaction".into(),
-                params: rpc::Params::Array(vec![rlp]),
-            }))
-        }))))
+                params: rpc::Params::Array(vec![serde_json::to_value(rlp).unwrap()]),
+            })))
+        });
+    
+        Either::A(Either::A(Box::new(res)))
     }
 }
+

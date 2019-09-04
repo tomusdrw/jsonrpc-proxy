@@ -1,14 +1,15 @@
 [package]
-name = "ethereum-proxy-accounts"
+name = "ethsign-transaction"
 version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-cli-params = { path = "../../../proxy/cli-params" }
+serde = { version = "1.0", features = ["derive"] }
+rlp = "0.4"
+tiny-keccak = "1.5"
+ethereum-types = "0.7"
 ethsign = { git = "https://github.com/tomusdrw/ethsign", branch = "td-clone" }
-ethsign-transaction = { path = "./transaction" }
+impl-serde = { version = "0.1" }
 #ethsign = "0.7"
-jsonrpc-core = "13.1"
 log="0.4"
-serde_json = "1.0"
