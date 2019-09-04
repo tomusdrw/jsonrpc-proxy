@@ -6,6 +6,7 @@
 #![warn(missing_docs)]
 
 use std::sync::Arc;
+use std::sync::atomic::{self, AtomicUsize};
 use jsonrpc_core::{
     self as rpc,
     futures::Future,
@@ -29,6 +30,7 @@ type Upstream = Box<
 pub struct Middleware {
     secret: Option<SecretKey>,
     upstream: Arc<Upstream>,
+    id: Arc<AtomicUsize>,
 }
 
 impl Middleware {
@@ -55,6 +57,7 @@ impl Middleware {
         Self {
             secret,
             upstream,
+            id: Arc::new(AtomicUsize::new(10_000)),
         }
     }
 }
@@ -74,13 +77,20 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             Some(secret) => secret.clone(),
             None => return Either::B(next(call, meta)),
         };
+        let next_id = || {
+            let id = self.id.fetch_add(1, atomic::Ordering::SeqCst);
+            rpc::Id::Num(id as u64)
+        };
 
         log::trace!("Parsing call: {:?}", call);
         let (jsonrpc, id) = match call {
-            rpc::Call::MethodCall(rpc::MethodCall { ref mut method, ref jsonrpc, ref id, .. })
-                if method == "eth_sendTransaction" => {
+            rpc::Call::MethodCall(rpc::MethodCall { ref mut method, ref jsonrpc, ref mut id, .. })
+                if method == "eth_sendTransaction" =>
+            {
+                let orig_id = id.clone();
                 *method = "parity_composeTransaction".into();
-                (*jsonrpc, id.clone())
+                *id = next_id();
+                (*jsonrpc, orig_id)
             },
             _ => return Either::B(next(call, meta)),
         };
@@ -89,12 +99,13 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
         let transaction_request = next(call, meta);
         let chain_id = (self.upstream)(rpc::Call::MethodCall(rpc::MethodCall {
             jsonrpc,
-            id: id.clone(),
-            method: "eth_chain_id".into(),
+            id: next_id(),
+            method: "eth_chainId".into(),
             params: rpc::Params::Array(vec![]),
         }));
         let upstream = self.upstream.clone();
         let res = transaction_request.join(chain_id).and_then(move |(request, chain_id)| {
+            log::trace!("Got results, parsing composed transaction and chain_id");
             const PROOF: &str = "Output always produced for `MethodCall`";
             let err = |id, msg: &str| {
                 Either::A(future::ok(Some(rpc::Output::Failure(rpc::Failure {
@@ -137,7 +148,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             let public = secret.public();
             let address = public.address();
             let from = request.from;
-            if !from.is_zero() && from.as_bytes() != address {
+            if from.as_bytes() != address {
                 log::error!("Expected to send from {:?}, but only support {:?}", from, address);
                 return err(id, "Invalid `from` address")
             }
