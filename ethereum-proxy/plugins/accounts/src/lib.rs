@@ -6,10 +6,11 @@
 #![warn(missing_docs)]
 
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::sync::atomic::{self, AtomicUsize};
 use jsonrpc_core::{
     self as rpc,
-    futures::Future,
+    futures::{Future, sync::oneshot},
     futures::future::{self, Either},
 };
 use ethsign::{SecretKey, Protected, KeyFile};
@@ -31,6 +32,7 @@ pub struct Middleware {
     secret: Option<SecretKey>,
     upstream: Arc<Upstream>,
     id: Arc<AtomicUsize>,
+    lock: Arc<Mutex<Option<oneshot::Receiver<()>>>>,
 }
 
 impl Middleware {
@@ -58,9 +60,12 @@ impl Middleware {
             secret,
             upstream,
             id: Arc::new(AtomicUsize::new(10_000)),
+            lock: Default::default(),
         }
     }
 }
+
+const PROOF: &str = "Output always produced for `MethodCall`";
 
 impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     type Future = rpc::middleware::NoopFuture;
@@ -77,6 +82,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             Some(secret) => secret.clone(),
             None => return Either::B(next(call, meta)),
         };
+        let address = secret.public().address().to_vec();
         let next_id = || {
             let id = self.id.fetch_add(1, atomic::Ordering::SeqCst);
             rpc::Id::Num(id as u64)
@@ -85,18 +91,44 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
         log::trace!("Parsing call: {:?}", call);
         let (jsonrpc, id) = match call {
             rpc::Call::MethodCall(rpc::MethodCall { ref mut method, ref jsonrpc, ref mut id, .. })
-                if method == "eth_sendTransaction" =>
+                if method == "eth_sendTransaction" || method == "parity_postTransaction" => 
             {
                 let orig_id = id.clone();
                 *method = "parity_composeTransaction".into();
                 *id = next_id();
                 (*jsonrpc, orig_id)
             },
+            // prepend signing account to the accounts list.
+            rpc::Call::MethodCall(rpc::MethodCall { ref mut method, .. })
+                if method == "eth_accounts" =>
+            {
+                let res = next(call, meta).map(|mut output| {
+                    if let Some(
+                        rpc::Output::Success(ref mut s)
+                    ) = output {
+                        let rpc::Success { ref mut result, .. } = s;
+                        if let rpc::Value::Array(ref mut vec) = result {
+                             vec.insert(0, serde_json::to_value(Bytes(address)).unwrap());
+                        }
+                    }
+                    log::debug!("Returning accounts: {:?}", output);
+                    output
+                });
+                return Either::A(Either::A(Box::new(res)))
+            },
             _ => return Either::B(next(call, meta)),
         };
 
+        // Acquire lock to make sure we call it sequentially.
+        let (tx, previous) = {
+            let mut lock = self.lock.lock().unwrap();
+            let previous = lock.take();
+            let (tx, rx) = oneshot::channel();
+            *lock = Some(rx);
+            (tx, previous)
+        };
+
         // Get composed transaction
-        let transaction_request = next(call, meta);
         let chain_id = (self.upstream)(rpc::Call::MethodCall(rpc::MethodCall {
             jsonrpc,
             id: next_id(),
@@ -104,9 +136,13 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             params: rpc::Params::Array(vec![]),
         }));
         let upstream = self.upstream.clone();
+        let upstream2 = upstream.clone();
+        let transaction_request = match previous {
+            Some(prev) => Either::A(prev.map_err(|_| ()).then(move |_| upstream2(call))),
+            None => Either::B(upstream2(call)),
+        };
         let res = transaction_request.join(chain_id).and_then(move |(request, chain_id)| {
             log::trace!("Got results, parsing composed transaction and chain_id");
-            const PROOF: &str = "Output always produced for `MethodCall`";
             let err = |id, msg: &str| {
                 Either::A(future::ok(Some(rpc::Output::Failure(rpc::Failure {
                     jsonrpc,
@@ -120,7 +156,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             };
             let request = match request.expect(PROOF) {
                 rpc::Output::Success(rpc::Success { result, .. }) => {
-                    log::trace!("Got composed: {:?}", result);
+                    log::debug!("Got composed: {:?}", result);
                     match serde_json::from_value::<Transaction>(result) {
                         Ok(tx) => tx,
                         Err(e) => {
@@ -133,7 +169,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             };
             let chain_id = match chain_id.expect(PROOF) {
                 rpc::Output::Success(rpc::Success { result, .. }) => {
-                    log::trace!("Got chain_id: {:?}", result);
+                    log::debug!("Got chain_id: {:?}", result);
                     match serde_json::from_value::<U256>(result) {
                         Ok(id) => id.as_u64(),
                         Err(e) => {
@@ -175,8 +211,10 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                 method: "eth_sendRawTransaction".into(),
                 params: rpc::Params::Array(vec![serde_json::to_value(rlp).unwrap()]),
             })))
+        }).then(move |x| {
+            let _ = tx.send(());
+            x
         });
-    
         Either::A(Either::A(Box::new(res)))
     }
 }
