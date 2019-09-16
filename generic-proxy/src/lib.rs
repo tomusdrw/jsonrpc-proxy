@@ -25,6 +25,7 @@ use tokio::runtime::current_thread::Runtime;
 use std::sync::Arc;
 use clap::App;
 
+/// A generic proxy metadata.
 pub type Metadata = Option<Arc<::jsonrpc_pubsub::Session>>;
 
 type Middleware<T, E> = (
@@ -51,10 +52,13 @@ fn handler<T: upstream::Transport, E: rpc::Middleware<Metadata>>(
 
 /// TODO [ToDr] The whole thing is really shit.
 pub trait Extension {
+    /// Middleware type.
     type Middleware: rpc::Middleware<Metadata> + Clone;
 
+    /// Configure clap application with parameters.
     fn configure_app<'a, 'b>(&'a mut self, app: clap::App<'a, 'b>) -> clap::App<'a, 'b>;
 
+    /// Parse matches and create the middleware.
     fn parse_matches(matches: &clap::ArgMatches, upstream: impl upstream::Transport) -> Self::Middleware;
 }
 

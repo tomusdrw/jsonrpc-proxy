@@ -27,6 +27,7 @@ type Upstream = Box<
     + Sync
 >;
 
+/// A middleware intercepting transaction requests and signing them locally.
 #[derive(Clone)]
 pub struct Middleware {
     secret: Option<SecretKey>,
