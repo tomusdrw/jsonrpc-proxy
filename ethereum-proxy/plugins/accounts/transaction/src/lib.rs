@@ -135,6 +135,15 @@ impl<'a> SignedTransaction<'a> {
         self.with_rlp(|s| keccak(s.as_raw()))
     }
 
+    pub fn bare_hash(&self) -> [u8; 32] {
+        let chain_id = self.chain_id().unwrap_or_default();
+
+        SignTransaction {
+            transaction: std::borrow::Cow::Borrowed(&self.transaction),
+            chain_id,
+        }.hash()
+    }
+
     pub fn to_rlp(&self) -> Vec<u8> {
         self.with_rlp(|s| s.drain())
     }
