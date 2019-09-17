@@ -1,12 +1,11 @@
 [package]
-name = "ethsign-transaction"
+name = "ethereum-transaction"
 version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 ethereum-types = "0.7"
-ethsign = "0.7"
 impl-serde = { version = "0.1" }
 log="0.4"
 rlp = "0.4"

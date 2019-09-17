@@ -335,11 +335,23 @@ name = "ethereum-proxy-accounts"
 version = "0.1.0"
 dependencies = [
  "cli-params 0.1.0",
+ "ethereum-transaction 0.1.0",
  "ethsign 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "ethsign-transaction 0.1.0",
  "jsonrpc-core 13.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.40 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ethereum-transaction"
+version = "0.1.0"
+dependencies = [
+ "ethereum-types 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "impl-serde 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rlp 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.100 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tiny-keccak 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -366,19 +378,6 @@ dependencies = [
  "secp256k1 0.15.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.100 (registry+https://github.com/rust-lang/crates.io-index)",
  "zeroize 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "ethsign-transaction"
-version = "0.1.0"
-dependencies = [
- "ethereum-types 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ethsign 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "impl-serde 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "rlp 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.100 (registry+https://github.com/rust-lang/crates.io-index)",
- "tiny-keccak 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

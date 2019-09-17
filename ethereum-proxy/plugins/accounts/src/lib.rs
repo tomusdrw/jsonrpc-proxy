@@ -14,7 +14,7 @@ use jsonrpc_core::{
     futures::future::{self, Either},
 };
 use ethsign::{SecretKey, Protected, KeyFile};
-use ethsign_transaction::{Bytes, SignTransaction, SignedTransaction, Transaction, U256};
+use ethereum_transaction::{Bytes, SignTransaction, SignedTransaction, Transaction, U256};
 
 pub mod config;
 
