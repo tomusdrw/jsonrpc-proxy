@@ -57,6 +57,47 @@ pub struct SignedTransaction<'a> {
     pub s: U256,
 }
 
+impl<'a> rlp::Decodable for SignedTransaction<'a> {
+	fn decode(d: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
+		if d.item_count()? != 9 {
+			return Err(rlp::DecoderError::RlpIncorrectListLen);
+		}
+
+	    Ok(SignedTransaction {
+			transaction: Cow::Owned(Transaction {
+				nonce: d.val_at(0)?,
+				gas_price: d.val_at(1)?,
+				gas: d.val_at(2)?,
+				to: d.val_at(3)?,
+                from: Default::default(),
+				value: d.val_at(4)?,
+				data: d.val_at::<Vec<u8>>(5)?.into(),
+			}),
+			v: d.val_at(6)? ,
+			r: d.val_at(7)?,
+			s: d.val_at(8)?,
+		})
+	}
+}
+
+impl<'a> rlp::Encodable for SignedTransaction<'a> {
+	fn rlp_append(&self, s: &mut RlpStream) {
+		s.begin_list(9);
+		s.append(&self.transaction.nonce);
+		s.append(&self.transaction.gas_price);
+		s.append(&self.transaction.gas);
+        match self.transaction.to.as_ref() {
+            None => s.append(&""),
+            Some(addr) => s.append(addr),
+        };
+		s.append(&self.transaction.value);
+		s.append(&self.transaction.data.0);
+        s.append(&self.v);
+        s.append(&self.r);
+        s.append(&self.s);
+    }
+}
+
 impl<'a> SignedTransaction<'a> {
     pub fn new(
         transaction: Cow<'a, Transaction>,
@@ -77,6 +118,15 @@ impl<'a> SignedTransaction<'a> {
         }
     }
 
+    pub fn standard_v(&self) -> u8 {
+		match self.v {
+			v if v == 27 => 0,
+			v if v == 28 => 1,
+			v if v >= 35 => ((v - 1) % 2) as u8,
+			_ => 4
+		}
+	}
+
     pub fn chain_id(&self) -> Option<u64> {
         replay_protection::chain_id(self.v)
     }
@@ -91,19 +141,7 @@ impl<'a> SignedTransaction<'a> {
 
     fn with_rlp<R>(&self, f: impl FnOnce(RlpStream) -> R) -> R {
         let mut s = RlpStream::new();
-		s.begin_list(9);
-		s.append(&self.transaction.nonce);
-		s.append(&self.transaction.gas_price);
-		s.append(&self.transaction.gas);
-        match self.transaction.to.as_ref() {
-            None => s.append(&""),
-            Some(addr) => s.append(addr),
-        };
-		s.append(&self.transaction.value);
-		s.append(&self.transaction.data.0);
-        s.append(&self.v);
-        s.append(&self.r);
-        s.append(&self.s);
+        rlp::Encodable::rlp_append(self, &mut s);
         f(s)
     }
 }
