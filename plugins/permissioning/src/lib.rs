@@ -94,7 +94,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     type CallFuture = rpc::futures::future::FutureResult<Option<rpc::Output>, ()>;
 
     fn on_call<F, X>(&self, call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X> where
-        F: FnOnce(rpc::Call, M) -> X + Send,
+        F: Fn(rpc::Call, M) -> X + Send,
         X: Future<Item = Option<rpc::Output>, Error = ()> + Send + 'static, 
     {
         enum Action {
@@ -157,7 +157,7 @@ mod tests {
     use std::sync::{atomic, Arc};
     use super::*;
 
-    fn callback() -> (impl FnOnce(rpc::Call, ()) -> rpc::futures::future::FutureResult<Option<rpc::Output>, ()>, Arc<atomic::AtomicBool>) {
+    fn callback() -> (impl Fn(rpc::Call, ()) -> rpc::futures::future::FutureResult<Option<rpc::Output>, ()>, Arc<atomic::AtomicBool>) {
         let called = Arc::new(atomic::AtomicBool::new(false));
         let called2 = called.clone();
         let next = move |_, _| {

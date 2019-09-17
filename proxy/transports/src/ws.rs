@@ -14,7 +14,7 @@ const CATEGORY: &str = "WebSockets Server";
 const PREFIX: &str = "websockets";
 
 /// Returns CLI configuration options for the WS server.
-pub fn params<M, S>() -> Vec<Param<Box<Configurator<M, S>>>> where
+pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>> where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
 {
@@ -77,7 +77,7 @@ options: "all", "none". "#,
  
 /// Starts WebSockets server on given handler.
 pub fn start<T, M, S>(
-    params: Vec<Box<Configurator<M, S>>>,
+    params: Vec<Box<dyn Configurator<M, S>>>,
     io: T,
 ) -> ws::Result<ws::Server> where
     T: Into<rpc::MetaIoHandler<M, S>>,
@@ -118,7 +118,7 @@ impl<F, M, S> Configurator<M, S> for F where
     }
 }
 
-fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser: F) -> Param<Box<Configurator<M, S>>> where
+fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser: F) -> Param<Box<dyn Configurator<M, S>>> where
     F: Fn(String) -> Result<X, String> + 'static,
     X: Configurator<M, S> + 'static,
     M: rpc::Metadata,

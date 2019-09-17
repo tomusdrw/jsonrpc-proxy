@@ -7,7 +7,11 @@
 
 #[macro_use]
 extern crate clap;
+extern crate cli;
+extern crate cli_params;
+extern crate ethereum_proxy_accounts as accounts;
 extern crate generic_proxy;
+extern crate jsonrpc_core as rpc;
 extern crate simple_cache;
 extern crate upstream;
 
@@ -91,7 +95,8 @@ fn main() {
                 unsubscribe: "signer_unsubscribePending".into(),
                 name: "signer_pending".into(),
             },
-        ]
+        ],
+        Extension::default(),
     )
 }
 
@@ -100,4 +105,31 @@ fn cache(name: &str) -> simple_cache::Method {
         name, 
         simple_cache::CacheEviction::Time(::std::time::Duration::from_secs(3)),
     )
+}
+
+#[derive(Default)]
+struct Extension {
+    params: Vec<cli_params::Param<accounts::config::Param>>,
+}
+
+impl generic_proxy::Extension for Extension {
+    type Middleware = accounts::Middleware;
+
+    fn configure_app<'a, 'b>(&'a mut self, app: clap::App<'a, 'b>) -> clap::App<'a, 'b> {
+        self.params = accounts::config::params();    
+        cli::configure_app(app, &self.params)
+    }
+
+    fn parse_matches(matches: &clap::ArgMatches, upstream: impl upstream::Transport) -> Self::Middleware {
+        use rpc::futures::Future;
+        let all_params = accounts::config::params();    
+
+        let params = cli::parse_matches(matches, &all_params).ok().unwrap_or_else(Vec::new);
+        let call = move |call: rpc::Call| {
+            Box::new(upstream.send(call).map_err(|e| {
+                log::error!("Upstream error: {:?}", e)
+            })) as _
+        };
+        accounts::Middleware::new(std::sync::Arc::new(Box::new(call)), &params)
+    }
 }

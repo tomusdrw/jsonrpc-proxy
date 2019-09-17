@@ -187,7 +187,7 @@ impl WebSocket {
 // we disconnect from the upstream as well and all the subscriptions are dropped automatically.
 impl upstream::Transport for WebSocket {
     type Error = String;
-    type Future = Box<Future<Item = Option<rpc::Output>, Error = Self::Error> + Send>;
+    type Future = Box<dyn Future<Item = Option<rpc::Output>, Error = Self::Error> + Send>;
 
     fn send(&self, call: rpc::Call) -> Self::Future {
         trace!("Calling: {:?}", call);
