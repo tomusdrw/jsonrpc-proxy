@@ -7,9 +7,9 @@ authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 cli-params = { path = "../cli-params" }
 # TODO [ToDr] feature-gate transports.
 jsonrpc-core = "14.0"
-jsonrpc-http-server = "13.2"
-jsonrpc-ipc-server = "13.2"
-jsonrpc-pubsub = "13.2"
-jsonrpc-tcp-server = "13.2"
-jsonrpc-ws-server = "13.2"
+jsonrpc-http-server = "14.0"
+jsonrpc-ipc-server = "14.0"
+jsonrpc-pubsub = "14.0"
+jsonrpc-tcp-server = "14.0"
+jsonrpc-ws-server = "14.0"
 log = "0.4"
