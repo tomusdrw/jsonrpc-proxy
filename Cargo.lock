@@ -683,7 +683,7 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-ipc-server"
-version = "14.0.0"
+version = "14.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "jsonrpc-core 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1742,7 +1742,7 @@ dependencies = [
  "cli-params 0.1.0",
  "jsonrpc-core 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-http-server 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-ipc-server 14.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-ipc-server 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-pubsub 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-tcp-server 14.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-ws-server 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2075,7 +2075,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum itoa 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)" = "501266b7edd0174f8530248f87f99c88fbe60ca4ef3dd486835b8d8d53136f7f"
 "checksum jsonrpc-core 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "9b392c9e8e43a12e6b21160903f473b1066e57fe18477394a93a1efd25654003"
 "checksum jsonrpc-http-server 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "dd3d54c822dc67707f21b15f13995b24eb090501c8ad67782b5484c9be36255b"
-"checksum jsonrpc-ipc-server 14.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "deebb0b7d4a59898fb0738756a78d4e31d6afb84471aa75d6fb9b041f88a7ed2"
+"checksum jsonrpc-ipc-server 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "bed0288dfe341a68a5a54d824db5db0cbb9acb8f642cc5e1ac3e58239f24baed"
 "checksum jsonrpc-pubsub 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "dbe9faf8ba7ea28c58937cfbca538db1af11a9e72eae1aa8e6a83926b6b4dc46"
 "checksum jsonrpc-server-utils 14.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "56ca64eeb4463722c49dd526e0a87dfc0cdecda9348a4b6f5720f25abc4fcc89"
 "checksum jsonrpc-tcp-server 14.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d38d09a7b9eaec3789b63cfa7cb48b290377776b78f42084099f66e9542825ab"
