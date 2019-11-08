@@ -11,4 +11,4 @@ log = "0.4"
 serde_json = "1.0"
 tokio = "0.1"
 upstream = { path = "../upstream" }
-websocket = { version = "0.23", default-features = false, features = ["async"] }
+websocket = { version = "0.24", default-features = false, features = ["async"] }
