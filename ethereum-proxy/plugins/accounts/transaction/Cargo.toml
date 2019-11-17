@@ -1,8 +1,11 @@
 [package]
 name = "ethereum-transaction"
+description = "A set of primitives to compose ethereum transactions."
+repository = "https://github.com/tomusdrw/jsonrpc-proxy"
 version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 edition = "2018"
+license = "GPL-3.0"
 
 [dependencies]
 ethereum-types = "0.7"

@@ -1,3 +1,5 @@
+//! A set of primitives to construct ethereum transactions.
+
 use std::borrow::Cow;
 use serde::{Serialize, Deserialize};
 use rlp::RlpStream;
