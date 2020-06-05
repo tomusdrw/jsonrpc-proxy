@@ -674,7 +674,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "hyper 0.12.35 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-server-utils 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-server-utils 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "net2 0.2.33 (registry+https://github.com/rust-lang/crates.io-index)",
  "parking_lot 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -683,11 +683,11 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-ipc-server"
-version = "14.1.0"
+version = "14.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-server-utils 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-server-utils 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "parity-tokio-ipc 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "parking_lot 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -708,7 +708,7 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-server-utils"
-version = "14.1.0"
+version = "14.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bytes 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -727,7 +727,7 @@ version = "14.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-server-utils 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-server-utils 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "parking_lot 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-service 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -739,7 +739,7 @@ version = "14.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-server-utils 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-server-utils 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "parking_lot 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "slab 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1771,7 +1771,7 @@ dependencies = [
  "cli-params 0.1.0",
  "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-http-server 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-ipc-server 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-ipc-server 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-pubsub 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-tcp-server 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-ws-server 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2118,9 +2118,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum itoa 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)" = "501266b7edd0174f8530248f87f99c88fbe60ca4ef3dd486835b8d8d53136f7f"
 "checksum jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a0747307121ffb9703afd93afbd0fb4f854c38fb873f2c8b90e0e902f27c7b62"
 "checksum jsonrpc-http-server 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d52860f0549694aa4abb12766856f56952ab46d3fb9f0815131b2db3d9cc2f29"
-"checksum jsonrpc-ipc-server 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c3691f5567335a6ddfb0b104b6dcfa67aaf8f84fc05953324aece59f1b0b1502"
+"checksum jsonrpc-ipc-server 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "dedccd693325d833963b549e959137f30a7a0ea650cde92feda81dc0c1393cb5"
 "checksum jsonrpc-pubsub 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2d44f5602a11d657946aac09357956d2841299ed422035edf140c552cb057986"
-"checksum jsonrpc-server-utils 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1f06add502b48351e05dd95814835327fb115e4e9f834ca42fd522d3b769d4d2"
+"checksum jsonrpc-server-utils 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "56cbfb462e7f902e21121d9f0d1c2b77b2c5b642e1a4e8f4ebfa2e15b94402bb"
 "checksum jsonrpc-tcp-server 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4244677aaf41cfa2feb0ce2d7a041ec4c60cbc26b1e16d4ef3862fd8fb411c9f"
 "checksum jsonrpc-ws-server 14.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "017a7dd5083d9ed62c5e1dd3e317975c33c3115dac5447f4480fe05a8c354754"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
