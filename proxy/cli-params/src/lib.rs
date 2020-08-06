@@ -35,7 +35,7 @@ pub struct Param<Exec> {
     /// Parameter default value
     pub default_value: String,
     /// Parameter parser
-    pub parser: Box<Parser<Executor=Exec>>,
+    pub parser: Box<dyn Parser<Executor=Exec>>,
 }
 
 impl<X> Param<X> {
