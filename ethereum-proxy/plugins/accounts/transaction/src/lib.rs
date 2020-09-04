@@ -97,7 +97,8 @@ impl<'a> rlp::Decodable for SignedTransaction<'a> {
 }
 
 fn debug(s: &str, err: rlp::DecoderError) -> rlp::DecoderError {
-    rlp::DecoderError::Custom(format!("error decoding {}: {:?}", s, err))
+    log::error!("Error decoding field: {}: {:?}", s, err);
+    err
 }
 
 impl<'a> rlp::Encodable for SignedTransaction<'a> {
