@@ -79,10 +79,14 @@ impl<'a> rlp::Decodable for SignedTransaction<'a> {
 				gas: d.val_at(2).map_err(|e| debug("gas", e))?,
 				to: {
                     let to = d.at(3).map_err(|e| debug("to", e))?;
-                    if to.is_empty() && to.is_data() {
-                        None
+                    if to.is_empty() {
+                        if to.is_data() {
+                            None
+                        } else {
+                            return Err(rlp::DecoderError::RlpExpectedToBeData)
+                        }
                     } else {
-                        to.as_val().map_err(|e| debug("to", e))?
+                        Some(to.as_val().map_err(|e| debug("to", e))?)
                     }
                 },
                 from: Default::default(),
@@ -132,7 +136,7 @@ impl<'a> SignedTransaction<'a> {
         let s = U256::from_big_endian(&s);
 
         Self {
-            transaction: transaction.into(),
+            transaction,
             v,
             r,
             s,
@@ -189,4 +193,60 @@ mod replay_protection {
 			_ => None
 		}
 	}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn transaction_rlp_round_trip() {
+        let transaction = Transaction {
+            from: Default::default(),
+            to: None,
+            nonce: 5.into(),
+            gas_price: 15.into(),
+            gas: 69.into(),
+            data: Default::default(),
+            value: 1_000.into(),
+        };
+        let t = SignedTransaction::new(
+            Cow::Owned(transaction),
+            105,
+            0,
+            [1; 32],
+            [1; 32],
+        );
+
+        let encoded = rlp::encode(&t);
+        let decoded: SignedTransaction = rlp::decode(&encoded).unwrap();
+
+        assert_eq!(t, decoded);
+    }
+
+    #[test]
+    fn transaction_rlp_round_trip2() {
+        let transaction = Transaction {
+            from: Default::default(),
+            to: Some(ethereum_types::H160::repeat_byte(5)),
+            nonce: 5.into(),
+            gas_price: 15.into(),
+            gas: 69.into(),
+            data: Default::default(),
+            value: 1_000.into(),
+        };
+        let t = SignedTransaction::new(
+            Cow::Owned(transaction),
+            105,
+            0,
+            [1; 32],
+            [1; 32],
+        );
+
+        let encoded = rlp::encode(&t);
+        let decoded: SignedTransaction = rlp::decode(&encoded).unwrap();
+
+        assert_eq!(t, decoded);
+    }
+
 }
