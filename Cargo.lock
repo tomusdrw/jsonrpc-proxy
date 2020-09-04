@@ -356,7 +356,7 @@ name = "ethereum-proxy-accounts"
 version = "0.1.0"
 dependencies = [
  "cli-params 0.1.0",
- "ethereum-transaction 0.2.0",
+ "ethereum-transaction 0.3.0",
  "ethsign 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -365,7 +365,7 @@ dependencies = [
 
 [[package]]
 name = "ethereum-transaction"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "ethereum-types 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "impl-serde 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -9,7 +9,7 @@ use impl_serde::serialize as bytes;
 pub use ethereum_types::{Address, U256};
 
 /// Hex-serialized shim for `Vec<u8>`.
-#[derive(Serialize, Deserialize, Debug, Hash, PartialOrd, Ord, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Debug, Hash, PartialOrd, Ord, PartialEq, Eq, Clone, Default)]
 pub struct Bytes(#[serde(with="bytes")] pub Vec<u8>);
 impl From<Vec<u8>> for Bytes {
 	fn from(s: Vec<u8>) -> Self { Bytes(s) }
@@ -20,7 +20,7 @@ impl std::ops::Deref for Bytes {
 	fn deref(&self) -> &[u8] { &self.0[..] }
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Hash, Debug, Default)]
 #[serde(rename_all="camelCase")]
 pub struct Transaction {
     pub from: Address,
@@ -40,6 +40,13 @@ pub struct SignTransaction<'a> {
 }
 
 impl<'a> SignTransaction<'a> {
+    pub fn owned(tx: Transaction, chain_id: u64) -> Self {
+        Self {
+            transaction: Cow::Owned(tx),
+            chain_id
+        }
+    }
+
     pub fn hash(&self) -> [u8; 32] {
         SignedTransaction {
             transaction: Cow::Borrowed(&*self.transaction),
@@ -50,7 +57,7 @@ impl<'a> SignTransaction<'a> {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Hash, Debug)]
 #[serde(rename_all="camelCase")]
 pub struct SignedTransaction<'a> {
     pub transaction: Cow<'a, Transaction>,
@@ -67,19 +74,35 @@ impl<'a> rlp::Decodable for SignedTransaction<'a> {
 
 	    Ok(SignedTransaction {
 			transaction: Cow::Owned(Transaction {
-				nonce: d.val_at(0)?,
-				gas_price: d.val_at(1)?,
-				gas: d.val_at(2)?,
-				to: d.val_at(3)?,
+				nonce: d.val_at(0).map_err(|e| debug("nonce", e))?,
+				gas_price: d.val_at(1).map_err(|e| debug("gas_price", e))?,
+				gas: d.val_at(2).map_err(|e| debug("gas", e))?,
+				to: {
+                    let to = d.at(3).map_err(|e| debug("to", e))?;
+                    if to.is_empty() {
+                        if to.is_data() {
+                            None
+                        } else {
+                            return Err(rlp::DecoderError::RlpExpectedToBeData)
+                        }
+                    } else {
+                        Some(to.as_val().map_err(|e| debug("to", e))?)
+                    }
+                },
                 from: Default::default(),
-				value: d.val_at(4)?,
-				data: d.val_at::<Vec<u8>>(5)?.into(),
+				value: d.val_at(4).map_err(|e| debug("value", e))?,
+				data: d.val_at::<Vec<u8>>(5).map_err(|e| debug("data", e))?.into(),
 			}),
-			v: d.val_at(6)? ,
-			r: d.val_at(7)?,
-			s: d.val_at(8)?,
+			v: d.val_at(6).map_err(|e| debug("v", e))?,
+			r: d.val_at(7).map_err(|e| debug("r", e))?,
+			s: d.val_at(8).map_err(|e| debug("s", e))?,
 		})
 	}
+}
+
+fn debug(s: &str, err: rlp::DecoderError) -> rlp::DecoderError {
+    log::error!("Error decoding field: {}: {:?}", s, err);
+    err
 }
 
 impl<'a> rlp::Encodable for SignedTransaction<'a> {
@@ -113,7 +136,7 @@ impl<'a> SignedTransaction<'a> {
         let s = U256::from_big_endian(&s);
 
         Self {
-            transaction: transaction.into(),
+            transaction,
             v,
             r,
             s,
@@ -170,4 +193,60 @@ mod replay_protection {
 			_ => None
 		}
 	}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn transaction_rlp_round_trip() {
+        let transaction = Transaction {
+            from: Default::default(),
+            to: None,
+            nonce: 5.into(),
+            gas_price: 15.into(),
+            gas: 69.into(),
+            data: Default::default(),
+            value: 1_000.into(),
+        };
+        let t = SignedTransaction::new(
+            Cow::Owned(transaction),
+            105,
+            0,
+            [1; 32],
+            [1; 32],
+        );
+
+        let encoded = rlp::encode(&t);
+        let decoded: SignedTransaction = rlp::decode(&encoded).unwrap();
+
+        assert_eq!(t, decoded);
+    }
+
+    #[test]
+    fn transaction_rlp_round_trip2() {
+        let transaction = Transaction {
+            from: Default::default(),
+            to: Some(ethereum_types::H160::repeat_byte(5)),
+            nonce: 5.into(),
+            gas_price: 15.into(),
+            gas: 69.into(),
+            data: Default::default(),
+            value: 1_000.into(),
+        };
+        let t = SignedTransaction::new(
+            Cow::Owned(transaction),
+            105,
+            0,
+            [1; 32],
+            [1; 32],
+        );
+
+        let encoded = rlp::encode(&t);
+        let decoded: SignedTransaction = rlp::decode(&encoded).unwrap();
+
+        assert_eq!(t, decoded);
+    }
+
 }
