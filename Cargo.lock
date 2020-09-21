@@ -344,7 +344,7 @@ dependencies = [
  "cli 0.1.0",
  "cli-params 0.1.0",
  "ethereum-proxy-accounts 0.1.0",
- "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-core 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "rpc-proxy 0.1.0",
  "simple-cache 0.1.0",
@@ -1108,7 +1108,7 @@ version = "0.1.0"
 dependencies = [
  "cli-params 0.1.0",
  "fnv 1.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-core 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.116 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.116 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1352,7 +1352,7 @@ dependencies = [
  "clap 2.33.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "cli 0.1.0",
  "env_logger 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-core 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-pubsub 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "permissioning 0.1.0",
  "simple-cache 0.1.0",
@@ -1480,7 +1480,7 @@ version = "0.1.0"
 dependencies = [
  "cli-params 0.1.0",
  "fnv 1.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-core 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "parking_lot 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.116 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.116 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1829,7 +1829,7 @@ name = "transports"
 version = "0.1.0"
 dependencies = [
  "cli-params 0.1.0",
- "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-core 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-http-server 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-ipc-server 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-pubsub 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1920,7 +1920,7 @@ version = "0.1.0"
 dependencies = [
  "cli-params 0.1.0",
  "fnv 1.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-core 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-pubsub 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "parking_lot 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2080,7 +2080,7 @@ name = "ws-upstream"
 version = "0.1.0"
 dependencies = [
  "cli-params 0.1.0",
- "jsonrpc-core 14.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-core 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-pubsub 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.57 (registry+https://github.com/rust-lang/crates.io-index)",
