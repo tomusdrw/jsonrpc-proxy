@@ -7,7 +7,7 @@ authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 cli-params = { path = "../../proxy/cli-params" }
 fnv = "1.0"
 jsonrpc-core = "14.2"
-jsonrpc-pubsub = "14.2"
+jsonrpc-pubsub = "15.0"
 log = "0.4"
 parking_lot = "0.11"
 serde = "1.0"
