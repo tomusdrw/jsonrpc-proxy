@@ -228,7 +228,9 @@ impl upstream::Transport for WebSocket {
                     method: subscription.unsubscribe.clone(),
                     params: rpc::Params::Array(vec![subs_id.into()]).into(),
                 });
-                ws.unsubscribe(call, subscription.clone());
+                if let Err(e) = ws.unsubscribe(call, subscription.clone()).wait() {
+                    warn!("Unable to auto-unsubscribe from '{}': {:?}", subscription.name, e);
+                }
             })))
         };
 

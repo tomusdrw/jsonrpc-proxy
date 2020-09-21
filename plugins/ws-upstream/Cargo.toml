@@ -5,7 +5,7 @@ authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 
 [dependencies]
 cli-params = { path = "../../proxy/cli-params" }
-jsonrpc-core = "14.2"
+jsonrpc-core = "15.0"
 jsonrpc-pubsub = "15.0"
 log = "0.4"
 serde_json = "1.0"
