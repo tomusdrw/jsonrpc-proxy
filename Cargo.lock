@@ -748,7 +748,7 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-ws-server"
-version = "15.0.0"
+version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "jsonrpc-core 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1839,7 +1839,7 @@ dependencies = [
  "jsonrpc-ipc-server 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-pubsub 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-tcp-server 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-ws-server 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-ws-server 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -2173,7 +2173,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum jsonrpc-pubsub 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f389c5cd1f3db258a99296892c21047e21ae73ff4c0e2d39650ea86fe994b4c7"
 "checksum jsonrpc-server-utils 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "72f1f3990650c033bd8f6bd46deac76d990f9bbfb5f8dc8c4767bf0a00392176"
 "checksum jsonrpc-tcp-server 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1b7d4a377ea231ca0d14fe1fb515ca89d6a46a33169efa6bdd5d0e56b9f359fc"
-"checksum jsonrpc-ws-server 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "436a92034d0137ab3e3c64a7a6350b428f31cb4d7d1a89f284bcdbcd98a7bc56"
+"checksum jsonrpc-ws-server 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6596fe75209b73a2a75ebe1dce4e60e03b88a2b25e8807b667597f6315150d22"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 "checksum language-tags 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "a91d884b6667cd606bb5a69aa0c99ba811a115fc68915e7056ec08a46e93199a"
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
