@@ -9,6 +9,6 @@ jsonrpc-core = "15.1"
 jsonrpc-pubsub = "15.1"
 log = "0.4"
 serde_json = "1.0"
-tokio = "0.1"
+tokio = "0.2"
 upstream = { path = "../upstream" }
 websocket = { version = "0.26", default-features = false, features = ["async"] }
