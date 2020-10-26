@@ -7,13 +7,13 @@ license = "GPL-3.0-or-later"
 [dependencies]
 cli-params = { path = "../../proxy/cli-params" }
 fnv = "1.0"
-jsonrpc-core = "14.2"
-jsonrpc-pubsub = "15.0"
+jsonrpc-core = "15.1"
+jsonrpc-pubsub = "15.1"
 log = "0.4"
 parking_lot = "0.11"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 tokio = "0.1"
-twox-hash = "1.5"
+twox-hash = "1.6"
 websocket = { version = "0.26", default-features = false, features = ["async"] }

@@ -7,9 +7,9 @@ license = "GPL-3.0-or-later"
 [dependencies]
 clap = { version = "2.33", features = ["yaml"] }
 cli = { path = "../proxy/cli" }
-env_logger = "0.7"
-jsonrpc-core = "14.2"
-jsonrpc-pubsub = "15.0"
+env_logger = "0.8"
+jsonrpc-core = "15.1"
+jsonrpc-pubsub = "15.1"
 permissioning = { path = "../plugins/permissioning" }
 simple-cache = { path = "../plugins/simple-cache" }
 tokio = "0.1"

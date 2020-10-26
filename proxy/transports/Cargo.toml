@@ -7,10 +7,10 @@ license = "GPL-3.0-or-later"
 [dependencies]
 cli-params = { path = "../cli-params" }
 # TODO [ToDr] feature-gate transports.
-jsonrpc-core = "14.2"
-jsonrpc-http-server = "14.2"
-jsonrpc-ipc-server = "14.2"
-jsonrpc-pubsub = "15.0"
-jsonrpc-tcp-server = "14.2"
-jsonrpc-ws-server = "14.2"
+jsonrpc-core = "15.1"
+jsonrpc-http-server = "15.1"
+jsonrpc-ipc-server = "15.1"
+jsonrpc-pubsub = "15.1"
+jsonrpc-tcp-server = "15.1"
+jsonrpc-ws-server = "15.1"
 log = "0.4"
