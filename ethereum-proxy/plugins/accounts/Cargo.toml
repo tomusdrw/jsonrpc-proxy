@@ -3,6 +3,7 @@ name = "ethereum-proxy-accounts"
 version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 edition = "2018"
+license = "GPL-3.0-or-later"
 
 [dependencies]
 cli-params = { path = "../../../proxy/cli-params" }

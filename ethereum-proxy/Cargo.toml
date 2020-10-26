@@ -2,6 +2,7 @@
 name = "ethereum-proxy"
 version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
+license = "GPL-3.0-or-later"
 
 [dependencies]
 clap = { version = "2.33", features = ["yaml"] }
