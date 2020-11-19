@@ -89,6 +89,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b671c8fb71b457dd4ae18c4ba1e59aa81793daacc361d82fcd410cef0d491875"
 
 [[package]]
+name = "autocfg"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
+
+[[package]]
 name = "base64"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -638,7 +644,7 @@ dependencies = [
  "net2",
  "rustc_version",
  "time",
- "tokio",
+ "tokio 0.1.22",
  "tokio-buf",
  "tokio-executor",
  "tokio-io",
@@ -801,7 +807,7 @@ dependencies = [
  "jsonrpc-core",
  "lazy_static",
  "log 0.4.11",
- "tokio",
+ "tokio 0.1.22",
  "tokio-codec",
  "unicase 2.5.1",
 ]
@@ -1091,7 +1097,7 @@ dependencies = [
  "mio-named-pipes",
  "miow 0.3.3",
  "rand 0.7.2",
- "tokio",
+ "tokio 0.1.22",
  "tokio-named-pipes",
  "tokio-uds",
  "winapi 0.3.8",
@@ -1232,6 +1238,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "pin-project-lite"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b063f57ec186e6140e2b8b6921e5f1bd89c7356dda5b33acc5401203ca6131c"
+
+[[package]]
 name = "ppv-lite86"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1287,7 +1299,7 @@ version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d71dacdc3c88c1fde3885a3be3fbab9f35724e6ce99467f7d9c5026132184ca"
 dependencies = [
- "autocfg",
+ "autocfg 0.1.6",
  "libc",
  "rand_chacha 0.1.1",
  "rand_core 0.4.2",
@@ -1319,7 +1331,7 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "556d3a1ca6600bfcbab7c7c91ccb085ac7fbbcd70e008a98742e7847f4f7bcef"
 dependencies = [
- "autocfg",
+ "autocfg 0.1.6",
  "rand_core 0.3.1",
 ]
 
@@ -1415,7 +1427,7 @@ version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "abf9b09b01790cfe0364f52bf32995ea3c39f4d2dd011eac241d2914146d0b44"
 dependencies = [
- "autocfg",
+ "autocfg 0.1.6",
  "rand_core 0.4.2",
 ]
 
@@ -1492,7 +1504,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "permissioning",
  "simple-cache",
- "tokio",
+ "tokio 0.3.4",
  "transports",
  "upstream",
  "ws-upstream",
@@ -1812,6 +1824,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9dfe2523e6fa84ddf5e688151d4e5fddc51678de9752c6512a24714c23818d61"
+dependencies = [
+ "autocfg 1.0.1",
+ "pin-project-lite",
+]
+
+[[package]]
 name = "tokio-buf"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1885,7 +1907,7 @@ dependencies = [
  "futures",
  "mio",
  "mio-named-pipes",
- "tokio",
+ "tokio 0.1.22",
 ]
 
 [[package]]
@@ -2124,7 +2146,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "tokio",
+ "tokio 0.3.4",
  "twox-hash",
  "websocket",
 ]
@@ -2279,7 +2301,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "log 0.4.11",
  "serde_json",
- "tokio",
+ "tokio 0.3.4",
  "upstream",
  "websocket",
 ]
