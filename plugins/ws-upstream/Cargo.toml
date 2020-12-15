@@ -7,7 +7,7 @@ license = "GPL-3.0-or-later"
 [dependencies]
 cli-params = { path = "../../proxy/cli-params" }
 jsonrpc-core = "16.0"
-jsonrpc-pubsub = "15.1"
+jsonrpc-pubsub = "16.0"
 log = "0.4"
 serde_json = "1.0"
 tokio = "0.1"
