@@ -12,7 +12,6 @@ jsonrpc-core = "16.0"
 jsonrpc-pubsub = "16.0"
 permissioning = { path = "../plugins/permissioning" }
 simple-cache = { path = "../plugins/simple-cache" }
-tokio = "0.1"
 transports = { path = "../proxy/transports" }
 upstream = { path = "../plugins/upstream" }
 ws-upstream = { path = "../plugins/ws-upstream" }

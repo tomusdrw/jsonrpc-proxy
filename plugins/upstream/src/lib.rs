@@ -66,7 +66,7 @@ pub trait Transport: Send + Sync + 'static {
     /// Error type of the transport.
     type Error: ::std::fmt::Debug;
     /// Future returned by the transport.
-    type Future: Future<Item = Option<rpc::Output>, Error = Self::Error> + Send + 'static;
+    type Future: Future<Output = Result<Option<rpc::Output>, Self::Error>> + Send + Unpin + 'static;
 
     /// Send subscribe call upstream.
     fn subscribe(
@@ -128,8 +128,10 @@ impl<T, M> rpc::Middleware<M> for Middleware<T> where
 
     fn on_call<F, X>(&self, request: rpc::Call, meta: M, _next: F) -> Either<Self::CallFuture, X> where
         F: FnOnce(rpc::Call, M) -> X + Send,
-        X: Future<Item = Option<rpc::Output>, Error = ()> + Send + 'static, 
+        X: Future<Output = Option<rpc::Output>> + Send + 'static, 
     {
+        use rpc::futures::{TryFutureExt, FutureExt};
+
         let (subscribe, unsubscribe) = {
             let method = helpers::get_method_name(&request);
             if let Some(method) = method {
@@ -143,25 +145,25 @@ impl<T, M> rpc::Middleware<M> for Middleware<T> where
         };
 
         if let Some(subscription) = subscribe {
-            return Either::A(Box::new(
-                self.transport.subscribe(request, meta.into(), subscription).map_err(|e| {
-                    warn!("Failed to subscribe: {:?}", e);
-                })
+            return Either::Left(Box::pin(
+                self.transport.subscribe(request, meta.into(), subscription)
+                    .map_err(|e| warn!("Failed to subscribe: {:?}", e))
+                    .map(|v| v.unwrap_or(None))
             ))
         }
 
         if let Some(subscription) = unsubscribe {
-            return Either::A(Box::new(
-                self.transport.unsubscribe(request, subscription).map_err(|e| {
-                    warn!("Failed to unsubscribe: {:?}", e);
-                })
+            return Either::Left(Box::pin(
+                self.transport.unsubscribe(request, subscription)
+                    .map_err(|e| warn!("Failed to unsubscribe: {:?}", e))
+                    .map(|v| v.unwrap_or(None))
             ))
         }
 
-        Either::A(Box::new(
-            self.transport.send(request).map_err(|e| {
-                warn!("Failed to send: {:?}", e);
-            })
+        Either::Left(Box::pin(
+            self.transport.send(request)
+                .map_err(|e| warn!("Failed to send: {:?}", e))
+                .map(|v| v.unwrap_or(None))
         ))
     }
 }

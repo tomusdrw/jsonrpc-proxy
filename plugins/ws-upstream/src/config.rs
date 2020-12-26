@@ -22,7 +22,7 @@ use cli_params;
 /// Configuration options of the WS upstream
 pub enum Param {
     /// Upstream URL
-    Url(::websocket::url::Url),
+    Url(url::Url),
 }
 
 /// Returns all configuration parameters for WS upstream.

@@ -34,6 +34,8 @@ const PREFIX: &str = "ipc";
 pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>> where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
+    S::Future: Unpin,
+    S::CallFuture: Unpin,
 {
     vec![
         param("path", "./jsonrpc.ipc", "Configures IPC server socket path.", |value| {
@@ -65,6 +67,8 @@ pub fn start<T, M, S>(
     T: Into<rpc::MetaIoHandler<M, S>>,
     M: rpc::Metadata + Default + From<Option<Arc<pubsub::Session>>>,
     S: rpc::Middleware<M>,
+    S::Future: Unpin,
+    S::CallFuture: Unpin,
 {
     let mut builder = ipc::ServerBuilder::with_meta_extractor(io, |context: &ipc::RequestContext| {
         Some(Arc::new(pubsub::Session::new(context.sender.clone()))).into()
@@ -105,6 +109,8 @@ fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser:
     X: Configurator<M, S> + 'static,
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
+    S::Future: Unpin,
+    S::CallFuture: Unpin,
 {
     Param {
         category: CATEGORY.into(),

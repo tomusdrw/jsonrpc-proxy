@@ -10,5 +10,5 @@ cli-params = { path = "../../../proxy/cli-params" }
 ethsign = "0.7"
 ethereum-transaction = { path = "./transaction" }
 jsonrpc-core = "16.0"
-log="0.4"
+log = "0.4"
 serde_json = "1.0"

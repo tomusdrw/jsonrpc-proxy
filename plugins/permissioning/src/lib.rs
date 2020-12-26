@@ -108,11 +108,11 @@ impl Middleware {
 
 impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     type Future = rpc::middleware::NoopFuture;
-    type CallFuture = rpc::futures::future::FutureResult<Option<rpc::Output>, ()>;
+    type CallFuture = rpc::futures::future::Ready<Option<rpc::Output>>;
 
     fn on_call<F, X>(&self, call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X> where
         F: Fn(rpc::Call, M) -> X + Send,
-        X: Future<Item = Option<rpc::Output>, Error = ()> + Send + 'static, 
+        X: Future<Output = Option<rpc::Output>> + Send + 'static, 
     {
         enum Action {
             Next,
@@ -139,12 +139,12 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
 
         match action {
             Action::Next => {
-                Either::B(next(call, meta))
+                Either::Right(next(call, meta))
             },
             Action::Reject => {
                 let (version, id) = get_call_details(call);
 
-                Either::A(rpc::futures::future::ok(id.map(|id| {
+                Either::Left(rpc::futures::future::ready(id.map(|id| {
                     rpc::Output::Failure(rpc::Failure {
                         jsonrpc: version,
                         error: rpc::Error {
@@ -174,7 +174,10 @@ mod tests {
     use std::sync::{atomic, Arc};
     use super::*;
 
-    fn callback() -> (impl Fn(rpc::Call, ()) -> rpc::futures::future::FutureResult<Option<rpc::Output>, ()>, Arc<atomic::AtomicBool>) {
+    fn callback() -> (
+        impl Fn(rpc::Call, ()) -> rpc::futures::future::Ready<Option<rpc::Output>>,
+        Arc<atomic::AtomicBool>,
+    ) {
         let called = Arc::new(atomic::AtomicBool::new(false));
         let called2 = called.clone();
         let next = move |_, _| {

@@ -3,6 +3,7 @@ name = "ws-upstream"
 version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 license = "GPL-3.0-or-later"
+edition = "2018"
 
 [dependencies]
 cli-params = { path = "../../proxy/cli-params" }
@@ -10,6 +11,6 @@ jsonrpc-core = "16.0"
 jsonrpc-pubsub = "16.0"
 log = "0.4"
 serde_json = "1.0"
-tokio = "0.1"
 upstream = { path = "../upstream" }
-websocket = { version = "0.26", default-features = false, features = ["async"] }
+soketto = "0.4.1"
+url = "2.1"

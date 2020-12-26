@@ -138,14 +138,16 @@ impl generic_proxy::Extension for Extension {
     }
 
     fn parse_matches(matches: &clap::ArgMatches, upstream: impl upstream::Transport) -> Self::Middleware {
-        use rpc::futures::Future;
+        use rpc::futures::{TryFutureExt, FutureExt};
         let all_params = accounts::config::params();    
 
         let params = cli::parse_matches(matches, &all_params).ok().unwrap_or_else(Vec::new);
         let call = move |call: rpc::Call| {
-            Box::new(upstream.send(call).map_err(|e| {
-                log::error!("Upstream error: {:?}", e)
-            })) as _
+            Box::new(
+                upstream.send(call)
+                    .map_err(|e| log::error!("Upstream error: {:?}", e))
+                    .map(|res| res.unwrap_or(None))
+            ) as _
         };
         accounts::Middleware::new(std::sync::Arc::new(Box::new(call)), &params)
     }
