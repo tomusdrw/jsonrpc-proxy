@@ -142,6 +142,7 @@ pub fn run_app<E: Extension>(
     // Actually run the damn thing.
     let transport = ws_upstream::WebSocket::new(
         ws_upstream_params,
+        |fut| std::mem::drop(tokio::spawn(fut))
     ).unwrap();
 
     let extra = E::parse_matches(&matches, transport.clone());

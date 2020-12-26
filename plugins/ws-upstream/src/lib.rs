@@ -96,23 +96,46 @@ use upstream::{
         // }))
 //     }
 // }
+type Spawnable = Box<dyn Future<Output = ()> + Send + Unpin>;
+
+/// A tokio abstraction.
+pub trait Spawn: Send + Sync {
+    /// Spawn a task in the background.
+    fn spawn(&self, ft: Spawnable);
+}
+
+impl<F: Fn(Spawnable) + Send + Sync> Spawn for F {
+    fn spawn(&self, ft: Spawnable) {
+        (*self)(ft)
+    }
+}
 
 /// WebSocket transport
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct WebSocket {
     id: Arc<atomic::AtomicUsize>,
     url: url::Url,
     shared: Arc<Shared>,
-    write_sender: mpsc::UnboundedSender<()>,
+    spawn: Arc<dyn Spawn>,
+    write_sender: mpsc::UnboundedSender<String>,
 }
 
+impl std::fmt::Debug for WebSocket {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        fmt.debug_struct("WebSocket")
+            .field("id", &self.id)
+            .field("url", &self.url)
+            .field("shared", &self.shared)
+            .finish()
+    }
+}
 
 impl WebSocket {
     /// Create new WebSocket transport within existing Event Loop.
     pub fn new(
         params: Vec<config::Param>,
+        spawn_taks: impl Spawn,
     ) -> Result<Self, String> {
-
         let mut url = "ws://127.0.0.1:9944".parse().expect("Valid address given.");
 
         for p in params {
@@ -125,7 +148,6 @@ impl WebSocket {
 
         println!("[WS] Connecting to: {:?}", url);
 
-        unimplemented!()
         // let (write_sender, write_receiver) = mpsc::unbounded();
         // let shared = Arc::new(Shared::default());
         //
@@ -171,25 +193,25 @@ impl WebSocket {
         // })
     }
 
-    // fn write_and_wait(
-    //     &self,
-    //     call: rpc::Call,
-    //     response: Option<oneshot::Receiver<String>>,
-    // ) -> impl Future<Output = Result<Option<rpc::Output>, String>> {
-    //     let request = rpc::types::to_string(&call).expect("jsonrpc-core are infallible");
-    //     let result = self.write_sender
-    //         .unbounded_send(OwnedMessage::Text(request))
-    //         .map_err(|e| format!("Error sending request: {:?}", e));
-    //
-    //     future::ready(result)
-    //         .and_then(|_| match response {
-    //             None => Either::Left(future::ready(Ok(None))),
-    //             Some(res) => res
-    //                 .map_ok(|out| serde_json::from_str(&out).ok())
-    //                 .map_err(|e| format!("{:?}", e))
-    //                 .right_future()
-    //         })
-    // }
+    fn write_and_wait(
+        &self,
+        call: jsonrpc_core::Call,
+        response: Option<oneshot::Receiver<String>>,
+    ) -> impl Future<Output = Result<Option<jsonrpc_core::Output>, String>> {
+        let request = jsonrpc_core::types::to_string(&call).expect("jsonrpc-core are infallible");
+        let result = self.write_sender
+            .unbounded_send(request)
+            .map_err(|e| format!("Error sending request: {:?}", e));
+
+        future::ready(result)
+            .and_then(|_| match response {
+                None => Either::Left(future::ready(Ok(None))),
+                Some(res) => res
+                    .map_ok(|out| serde_json::from_str(&out).ok())
+                    .map_err(|e| format!("{:?}", e))
+                    .right_future()
+            })
+    }
 }
 
 // TODO [ToDr] Might be better to simply have one connection per subscription.
@@ -203,16 +225,15 @@ impl upstream::Transport for WebSocket {
     >> + Send + Unpin>;
 
     fn send(&self, call: jsonrpc_core::Call) -> Self::Future {
-        unimplemented!()
-        // trace!("Calling: {:?}", call);
-        //
-        // // TODO [ToDr] Mangle ids per sender or just ensure atomicity
-        // let rx = {
-        //     let id = helpers::get_id(&call);
-        //     self.shared.add_pending(id, PendingKind::Regular)
-        // };
-        //
-        // Box::new(self.write_and_wait(call, rx))
+        log::trace!("Calling: {:?}", call);
+
+        // TODO [ToDr] Mangle ids per sender or just ensure atomicity
+        let rx = {
+            let id = helpers::get_id(&call);
+            self.shared.add_pending(id, PendingKind::Regular)
+        };
+
+        Box::new(self.write_and_wait(call, rx))
     }
 
     fn subscribe(
@@ -221,35 +242,39 @@ impl upstream::Transport for WebSocket {
         session: Option<Arc<jsonrpc_pubsub::Session>>,
         subscription: Subscription,
     ) -> Self::Future {
-        unimplemented!()
-        // let session = match session {
-        //     Some(session) => session,
-        //     None => {
-        //         return Box::new(futures::future::err("Called subscribe without session.".into()));
-        //     }
-        // };
-        //
-        // trace!("Subscribing to {:?}: {:?}", subscription, call);
-        //
-        // // TODO [ToDr] Mangle ids per sender or just ensure atomicity
-        // let rx = {
-        //     let ws = self.clone();
-        //     let id = helpers::get_id(&call);
-        //     self.shared.add_pending(id, PendingKind::Subscribe(session, Box::new(move |subs_id| {
-        //         // Create unsubscribe request.
-        //         let call = jsonrpc_core::Call::MethodCall(rpc::MethodCall {
-        //             jsonrpc: Some(rpc::Version::V2),
-        //             id: rpc::Id::Num(1),
-        //             method: subscription.unsubscribe.clone(),
-        //             params: rpc::Params::Array(vec![subs_id.into()]).into(),
-        //         });
-        //         if let Err(e) = ws.unsubscribe(call, subscription.clone()).wait() {
-        //             warn!("Unable to auto-unsubscribe from '{}': {:?}", subscription.name, e);
-        //         }
-        //     })))
-        // };
-        //
-        // Box::new(self.write_and_wait(call, rx))
+        let session = match session {
+            Some(session) => session,
+            None => {
+                return Box::new(futures::future::err("Called subscribe without session.".into()));
+            }
+        };
+
+        log::trace!("Subscribing to {:?}: {:?}", subscription, call);
+
+        // TODO [ToDr] Mangle ids per sender or just ensure atomicity
+        let rx = {
+            let ws = self.clone();
+            let id = helpers::get_id(&call);
+            self.shared.add_pending(id, PendingKind::Subscribe(session, Box::new(move |subs_id| {
+                // Create unsubscribe request.
+                let call = jsonrpc_core::Call::MethodCall(jsonrpc_core::MethodCall {
+                    jsonrpc: Some(jsonrpc_core::Version::V2),
+                    id: jsonrpc_core::Id::Num(1),
+                    method: subscription.unsubscribe.clone(),
+                    params: jsonrpc_core::Params::Array(vec![subs_id.into()]).into(),
+                });
+                let name = subscription.name.clone();
+                let fut = ws.unsubscribe(call, subscription.clone())
+                    .map_err(move |e| {
+                        log::warn!("Unable to auto-unsubscribe from '{}': {:?}", name, e);
+                    })
+                    .map(|_| ());
+
+                ws.spawn.spawn(Box::new(fut));
+            })))
+        };
+
+        Box::new(self.write_and_wait(call, rx))
     }
 
     fn unsubscribe(
@@ -259,14 +284,13 @@ impl upstream::Transport for WebSocket {
     ) -> Self::Future {
 
         log::trace!("Unsubscribing from {:?}: {:?}", subscription, call);
-        unimplemented!()
 
-        // // Remove the subscription id
-        // if let Some(subscription_id) = helpers::get_unsubscribe_id(&call) {
-        //     self.shared.remove_subscription(&subscription_id);
-        // }
-        //
-        // // It's a regular RPC, so just send it
-        // self.send(call)
+        // Remove the subscription id
+        if let Some(subscription_id) = helpers::get_unsubscribe_id(&call) {
+            self.shared.remove_subscription(&subscription_id);
+        }
+
+        // It's a regular RPC, so just send it
+        self.send(call)
     }
 }

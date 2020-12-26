@@ -787,7 +787,7 @@ dependencies = [
  "net2",
  "rustc_version",
  "time",
- "tokio",
+ "tokio 0.1.22",
  "tokio-buf",
  "tokio-executor",
  "tokio-io",
@@ -957,7 +957,7 @@ dependencies = [
  "jsonrpc-core",
  "lazy_static",
  "log 0.4.11",
- "tokio",
+ "tokio 0.1.22",
  "tokio-codec",
  "unicase 2.5.1",
 ]
@@ -1263,7 +1263,7 @@ dependencies = [
  "mio-named-pipes",
  "miow 0.3.3",
  "rand 0.7.2",
- "tokio",
+ "tokio 0.1.22",
  "tokio-named-pipes",
  "tokio-uds",
  "winapi 0.3.8",
@@ -1398,6 +1398,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "pin-project-lite"
+version = "0.1.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c917123afa01924fc84bb20c4c03f004d9c38e5127e3c039bbf7f4b9c76a2f6b"
 
 [[package]]
 name = "pin-utils"
@@ -1678,6 +1684,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "permissioning",
  "simple-cache",
+ "tokio 0.2.24",
  "transports",
  "upstream",
  "ws-upstream",
@@ -2025,6 +2032,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio"
+version = "0.2.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "099837d3464c16a808060bb3f02263b412f6fafcb5d01c533d309985fbeebe48"
+dependencies = [
+ "bytes 0.5.6",
+ "pin-project-lite",
+ "slab",
+]
+
+[[package]]
 name = "tokio-buf"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2098,7 +2116,7 @@ dependencies = [
  "futures 0.1.29",
  "mio",
  "mio-named-pipes",
- "tokio",
+ "tokio 0.1.22",
 ]
 
 [[package]]
@@ -2337,7 +2355,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "tokio",
+ "tokio 0.1.22",
  "twox-hash",
  "websocket",
 ]
@@ -2501,6 +2519,7 @@ dependencies = [
  "soketto",
  "upstream",
  "url 2.1.0",
+ "websocket",
 ]
 
 [[package]]

@@ -14,3 +14,4 @@ serde_json = "1.0"
 upstream = { path = "../upstream" }
 soketto = "0.4.1"
 url = "2.1"
+websocket = { version = "0.26", default-features = false, features = ["async"] }
