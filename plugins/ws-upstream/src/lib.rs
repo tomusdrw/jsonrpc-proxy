@@ -27,7 +27,7 @@ use std::{
 };
 use jsonrpc_core::{
     futures::{
-        self, Future, TryFutureExt, FutureExt,
+        self, Future, TryFutureExt, FutureExt, StreamExt,
         channel::{mpsc, oneshot},
         future::{self, Either},
     },
@@ -37,65 +37,70 @@ use upstream::{
     helpers,
     shared::{PendingKind, Shared}, 
 };
+use websocket::OwnedMessage;
 
-// impl WebSocketHandler {
-//     pub fn process_message(
-//         &self,
-//         message: OwnedMessage,
-//     ) -> impl Future<Output = Result<(), String>> {
-//         unimplemented!()
-        // Either::Right(future::ready(match message {
-        //     OwnedMessage::Close(e) => self.write_sender
-        //         .unbounded_send(OwnedMessage::Close(e))
-        //         .map_err(|e| format!("Error sending close message: {:?}", e)),
-        //     OwnedMessage::Ping(d) => self.write_sender
-        //         .unbounded_send(OwnedMessage::Pong(d))
-        //         .map_err(|e| format!("Error sending pong message: {:?}", e)),
-        //     OwnedMessage::Text(t) => {
-        //         // First check if it's a notification for a subscription
-        //         if let Some(id) = helpers::peek_subscription_id(t.as_bytes()) {
-        //             return if let Some(stream) = self.shared.notify_subscription(&id, t) {
-        //                 Either::Left(stream)
-        //             } else {
-        //                 warn!("Got notification for unknown subscription (id: {:?})", id);
-        //                 Either::Right(future::ready(Ok(())))
-        //             }
-        //         }
-        //
-        //         // then check if it's one of the pending calls
-        //         if let Some(id) = helpers::peek_id(t.as_bytes()) {
-        //             if let Some((sink, kind)) = self.shared.remove_pending(&id) {
-        //                 match kind {
-        //                     // Just a regular call, don't do anything else.
-        //                     PendingKind::Regular => {},
-        //                     // We have a subscription ID, register subscription.
-        //                     PendingKind::Subscribe(session, unsubscribe) => {
-        //                         let subscription_id = helpers::peek_result(t.as_bytes())
-        //                             .as_ref()
-        //                             .and_then(pubsub::SubscriptionId::parse_value);
-        //                         if let Some(subscription_id) = subscription_id {
-        //                             self.shared.add_subscription(subscription_id, session, unsubscribe);
-        //                         }                    
-        //                     },
-        //                 }
-        //
-        //                 trace!("Responding to (id: {:?}) with {:?}", id, t);
-        //                 if let Err(err) = sink.send(t) {
-        //                     warn!("Sending a response to deallocated channel: {:?}", err);
-        //                 }
-        //             } else {
-        //                 warn!("Got response for unknown request (id: {:?})", id);
-        //             }
-        //         } else {
-        //             warn!("Got unexpected notification: {:?}", t);
-        //         }
-        //
-        //         Ok(())
-        //     }
-        //     _ => Ok(()),
-        // }))
-//     }
-// }
+struct WebSocketHandler {
+    shared: Arc<Shared>,
+    write_sender: mpsc::UnboundedSender<OwnedMessage>,
+}
+
+impl WebSocketHandler {
+    pub fn process_message(
+        &self,
+        message: OwnedMessage,
+    ) -> impl Future<Output = Result<(), String>> {
+        future::ready(match message {
+            OwnedMessage::Close(e) => self.write_sender
+                .unbounded_send(OwnedMessage::Close(e))
+                .map_err(|e| format!("Error sending close message: {:?}", e)),
+            OwnedMessage::Ping(d) => self.write_sender
+                .unbounded_send(OwnedMessage::Pong(d))
+                .map_err(|e| format!("Error sending pong message: {:?}", e)),
+            OwnedMessage::Text(t) => {
+                // First check if it's a notification for a subscription
+                if let Some(id) = helpers::peek_subscription_id(t.as_bytes()) {
+                    return future::ready(self.shared.notify_subscription(&id, t)
+                        .unwrap_or_else(|| {
+                            log::warn!("Got notification for unknown subscription (id: {:?})", id);
+                            Ok(())
+                        }))
+                }
+
+                // then check if it's one of the pending calls
+                if let Some(id) = helpers::peek_id(t.as_bytes()) {
+                    if let Some((sink, kind)) = self.shared.remove_pending(&id) {
+                        match kind {
+                            // Just a regular call, don't do anything else.
+                            PendingKind::Regular => {},
+                            // We have a subscription ID, register subscription.
+                            PendingKind::Subscribe(session, unsubscribe) => {
+                                let subscription_id = helpers::peek_result(t.as_bytes())
+                                    .as_ref()
+                                    .and_then(jsonrpc_pubsub::SubscriptionId::parse_value);
+                                if let Some(subscription_id) = subscription_id {
+                                    self.shared.add_subscription(subscription_id, session, unsubscribe);
+                                }                    
+                            },
+                        }
+
+                        log::trace!("Responding to (id: {:?}) with {:?}", id, t);
+                        if let Err(err) = sink.send(t) {
+                            log::warn!("Sending a response to deallocated channel: {:?}", err);
+                        }
+                    } else {
+                        log::warn!("Got response for unknown request (id: {:?})", id);
+                    }
+                } else {
+                    log::warn!("Got unexpected notification: {:?}", t);
+                }
+
+                Ok(())
+            }
+            _ => Ok(()),
+        })
+    }
+}
+
 type Spawnable = Box<dyn Future<Output = ()> + Send + Unpin>;
 
 /// A tokio abstraction.
@@ -117,7 +122,7 @@ pub struct WebSocket {
     url: url::Url,
     shared: Arc<Shared>,
     spawn: Arc<dyn Spawn>,
-    write_sender: mpsc::UnboundedSender<String>,
+    write_sender: mpsc::UnboundedSender<OwnedMessage>,
 }
 
 impl std::fmt::Debug for WebSocket {
@@ -134,7 +139,7 @@ impl WebSocket {
     /// Create new WebSocket transport within existing Event Loop.
     pub fn new(
         params: Vec<config::Param>,
-        spawn_taks: impl Spawn,
+        spawn_tasks: impl Spawn + 'static,
     ) -> Result<Self, String> {
         let mut url = "ws://127.0.0.1:9944".parse().expect("Valid address given.");
 
@@ -148,49 +153,55 @@ impl WebSocket {
 
         println!("[WS] Connecting to: {:?}", url);
 
-        // let (write_sender, write_receiver) = mpsc::unbounded();
-        // let shared = Arc::new(Shared::default());
-        //
-        // let ws_future = {
-        //     let handler = WebSocketHandler {
-        //         shared: shared.clone(),
-        //         write_sender: write_sender.clone(),
-        //     };
-        //
-        //     ClientBuilder::from_url(&url)
-        //         .async_connect_insecure()
-        //         .compat()
-        //         .map_ok(|(duplex, _)| duplex.split())
-        //         .map_err(|e| format!("{:?}", e))
-        //         .and_then(move |(sink, stream)| {
-        //             let reader = stream
-        //                 .compat()
-        //                 .map_err(|e| format!("{:?}", e))
-        //                 .for_each(move |message| {
-        //                     trace!("Message received: {:?}", message);
-        //                     handler.process_message(message)
-        //                 });
-        //
-        //             let writer = sink
-        //                 .compat()
-        //                 .send_all(write_receiver.map_err(|_| websocket::WebSocketError::NoDataAvailable))
-        //                 .map_err(|e| format!("{:?}", e))
-        //                 .map(|_| ());
-        //
-        //             future::join(reader, writer)
-        //         })
-        // };
-        //
-        // runtime.spawn(ws_future.map(|_| ()).map_err(|err| {
-        //     error!("WebSocketError: {:?}", err);
-        // }));
-        //
-        // Ok(Self {
-        //     id: Arc::new(atomic::AtomicUsize::new(1)),
-        //     url,
-        //     shared,
-        //     write_sender,
-        // })
+        let (write_sender, write_receiver) = mpsc::unbounded();
+        let shared = Arc::new(Shared::default());
+
+        let ws_future = {
+            use futures::TryStreamExt;
+            use futures::compat::{Future01CompatExt};
+            use futures01::{Stream, Sink, Future};
+
+            let handler = WebSocketHandler {
+                shared: shared.clone(),
+                write_sender: write_sender.clone(),
+            };
+
+            let write_receiver = write_receiver
+                .map(|x| Ok(x) as Result<_, websocket::WebSocketError>)
+                .compat();
+            websocket::ClientBuilder::from_url(&url)
+                .async_connect_insecure()
+                .map(|(duplex, _)| duplex.split())
+                .map_err(|e| format!("{:?}", e))
+                .and_then(move |(sink, stream)| {
+                    let reader = stream
+                        .map_err(|e| format!("{:?}", e))
+                        .for_each(move |message| {
+                            log::trace!("Message received: {:?}", message);
+                            handler.process_message(message).compat()
+                        });
+
+                    let writer = sink
+                        .send_all(write_receiver)
+                        .map_err(|e| format!("{:?}", e))
+                        .map(|_| ());
+
+                    reader.join(writer)
+                })
+                .compat()
+        };
+
+        spawn_tasks.spawn(Box::new(ws_future.map_err(|err| {
+            log::error!("WebSocketError: {:?}", err);
+        }).map(|_| ())));
+
+        Ok(Self {
+            id: Arc::new(atomic::AtomicUsize::new(1)),
+            url,
+            shared,
+            spawn: Arc::new(spawn_tasks),
+            write_sender,
+        })
     }
 
     fn write_and_wait(
@@ -200,7 +211,7 @@ impl WebSocket {
     ) -> impl Future<Output = Result<Option<jsonrpc_core::Output>, String>> {
         let request = jsonrpc_core::types::to_string(&call).expect("jsonrpc-core are infallible");
         let result = self.write_sender
-            .unbounded_send(request)
+            .unbounded_send(OwnedMessage::Text(request))
             .map_err(|e| format!("Error sending request: {:?}", e));
 
         future::ready(result)

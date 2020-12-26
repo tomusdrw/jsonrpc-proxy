@@ -26,7 +26,7 @@ use parking_lot::{Mutex, RwLock};
 use pubsub;
 use rpc::{
     self,
-    futures::{self, channel::oneshot},
+    futures::channel::oneshot,
 };
 
 /// Pending request details

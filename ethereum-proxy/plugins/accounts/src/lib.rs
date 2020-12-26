@@ -27,7 +27,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{self, AtomicUsize};
 use jsonrpc_core::{
     self as rpc,
-    futures::{Future, TryFutureExt, channel::oneshot},
+    futures::{Future, channel::oneshot},
     futures::future::{self, Either},
 };
 use ethsign::{SecretKey, Protected, KeyFile};
@@ -102,7 +102,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
         F: FnOnce(rpc::Call, M) -> X + Send,
         X: Future<Output = Option<rpc::Output>> + Send + 'static, 
     {
-        use rpc::futures::{TryFutureExt, FutureExt, StreamExt};
+        use rpc::futures::FutureExt;
 
         let secret = match self.secret.as_ref() {
             Some(secret) => secret.clone(),

@@ -7,11 +7,11 @@ edition = "2018"
 
 [dependencies]
 cli-params = { path = "../../proxy/cli-params" }
+futures01 = { package = "futures", version = "0.1" }
 jsonrpc-core = "16.0"
 jsonrpc-pubsub = "16.0"
 log = "0.4"
 serde_json = "1.0"
 upstream = { path = "../upstream" }
-soketto = "0.4.1"
-url = "2.1"
+url = "1.0"
 websocket = { version = "0.26", default-features = false, features = ["async"] }
