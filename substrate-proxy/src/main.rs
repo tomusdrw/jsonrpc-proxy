@@ -28,6 +28,7 @@ extern crate generic_proxy;
 extern crate simple_cache;
 extern crate upstream;
 
+#[tokio::main]
 fn main() {
     let yml = load_yaml!("./cli.yml");
     let app = clap::App::from_yaml(yml).set_term_width(80);

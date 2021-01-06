@@ -167,6 +167,10 @@ impl WebSocket {
             };
 
             let write_receiver = write_receiver
+                .map(|msg| {
+                    log::trace!("Sending request: {:?}", msg);
+                    msg
+                })
                 .map(|x| Ok(x) as Result<_, websocket::WebSocketError>)
                 .compat();
             websocket::ClientBuilder::from_url(&url)

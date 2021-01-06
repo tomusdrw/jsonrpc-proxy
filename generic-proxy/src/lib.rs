@@ -153,8 +153,10 @@ pub fn run_app<E: Extension>(
         &permissioning_params,
         &upstream_params,
     );
-    let _server1 = transports::ws::start(ws_params, h()).unwrap();
+    let server1 = transports::ws::start(ws_params, h()).unwrap();
     let _server2 = transports::http::start(http_params, h()).unwrap();
     let _server3 = transports::tcp::start(tcp_params, h()).unwrap();
     let _server4 = transports::ipc::start(ipc_params, h()).unwrap();
+    
+    server1.wait().unwrap();
 }

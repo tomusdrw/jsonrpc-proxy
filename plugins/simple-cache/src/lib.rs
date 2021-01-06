@@ -229,6 +229,18 @@ mod tests {
     use rpc::Middleware as MiddlewareTrait;
     use super::*;
 
+    trait FutExt: std::future::Future {
+        fn wait(self) -> Self::Output;
+    }
+
+    impl<F> FutExt for F where
+        F: std::future::Future,
+    {
+        fn wait(self) -> Self::Output {
+            rpc::futures::executor::block_on(self)
+        }
+    }
+
     fn callback() -> (
         impl Fn(rpc::Call, ()) -> rpc::futures::future::Ready<Option<rpc::Output>>,
         Arc<atomic::AtomicUsize>,
@@ -275,8 +287,8 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
-        assert_eq!(res1, Ok(None));
-        assert_eq!(res2, Ok(None));
+        assert_eq!(res1, None);
+        assert_eq!(res2, None);
     }
 
     #[test]
@@ -296,8 +308,8 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 1);
-        assert_eq!(res1, Ok(None));
-        assert_eq!(res2, Ok(None));
+        assert_eq!(res1, None);
+        assert_eq!(res2, None);
     }
 
     #[test]
@@ -317,8 +329,8 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
-        assert_eq!(res1, Ok(None));
-        assert_eq!(res2, Ok(None));
+        assert_eq!(res1, None);
+        assert_eq!(res2, None);
     }
 
     #[test]
@@ -340,9 +352,9 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
-        assert_eq!(res1, Ok(None));
-        assert_eq!(res2, Ok(None));
-        assert_eq!(res3, Ok(None));
+        assert_eq!(res1, None);
+        assert_eq!(res2, None);
+        assert_eq!(res3, None);
     }
 
     // TODO [ToDr] Implement me
@@ -364,8 +376,8 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 1);
-        assert_eq!(res1.wait(), Ok(None));
-        assert_eq!(res2.wait(), Ok(None));
+        assert_eq!(res1.wait(), None);
+        assert_eq!(res2.wait(), None);
     }
 
 }

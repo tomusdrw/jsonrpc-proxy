@@ -14,6 +14,5 @@ parking_lot = "0.11"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
-tokio = "0.1"
 twox-hash = "1.6"
 websocket = { version = "0.26", default-features = false, features = ["async"] }

@@ -174,6 +174,18 @@ mod tests {
     use std::sync::{atomic, Arc};
     use super::*;
 
+    trait FutExt: std::future::Future {
+        fn wait(self) -> Self::Output;
+    }
+
+    impl<F> FutExt for F where
+        F: std::future::Future,
+    {
+        fn wait(self) -> Self::Output {
+            rpc::futures::executor::block_on(self)
+        }
+    }
+
     fn callback() -> (
         impl Fn(rpc::Call, ()) -> rpc::futures::future::Ready<Option<rpc::Output>>,
         Arc<atomic::AtomicBool>,
@@ -182,7 +194,7 @@ mod tests {
         let called2 = called.clone();
         let next = move |_, _| {
             called2.store(true, atomic::Ordering::SeqCst);
-            rpc::futures::future::ok(None)
+            rpc::futures::future::ready(None)
         };
 
         (next, called)
@@ -227,7 +239,7 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), true);
-        assert_eq!(result.wait(), Ok(None));
+        assert_eq!(result.wait(), None);
     }
 
     #[test]
@@ -247,7 +259,7 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), false);
-        assert_eq!(result.wait(), Ok(not_allowed()));
+        assert_eq!(result.wait(), not_allowed());
     }
 
     #[test]
@@ -264,7 +276,7 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), false);
-        assert_eq!(result.wait(), Ok(not_allowed()));
+        assert_eq!(result.wait(), not_allowed());
     }
 
     #[test]
@@ -284,6 +296,6 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), true);
-        assert_eq!(result.wait(), Ok(None));
+        assert_eq!(result.wait(), None);
     }
 }

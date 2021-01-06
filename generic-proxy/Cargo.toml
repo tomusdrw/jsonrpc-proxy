@@ -10,7 +10,7 @@ cli = { path = "../proxy/cli" }
 env_logger = "0.8"
 jsonrpc-core = "16.0"
 jsonrpc-pubsub = "16.0"
-tokio = { version = "0.2", features = ["rt-core"] }
+tokio = { version = "1.0", features = ["full"] }
 permissioning = { path = "../plugins/permissioning" }
 simple-cache = { path = "../plugins/simple-cache" }
 transports = { path = "../proxy/transports" }
