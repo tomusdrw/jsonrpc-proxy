@@ -27,7 +27,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{self, AtomicUsize};
 use jsonrpc_core::{
     self as rpc,
-    futures::{Future, sync::oneshot},
+    futures::{Future, channel::oneshot},
     futures::future::{self, Either},
 };
 use ethsign::{SecretKey, Protected, KeyFile};
@@ -37,8 +37,9 @@ pub mod config;
 
 type Upstream = Box<
     dyn Fn(rpc::Call) -> Box<
-        dyn Future<Item=Option<rpc::Output>, Error=()>
+        dyn Future<Output = Option<rpc::Output>>
         + Send
+        + Unpin
     >
     + Send
     + Sync
@@ -89,16 +90,23 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     type Future = rpc::middleware::NoopFuture;
     type CallFuture = Either<
         rpc::middleware::NoopCallFuture,
-        rpc::futures::future::FutureResult<Option<rpc::Output>, ()>,
+        rpc::futures::future::Ready<Option<rpc::Output>>,
     >;
 
-    fn on_call<F, X>(&self, mut call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X> where
+    fn on_call<F, X>(
+        &self,
+        mut call: rpc::Call,
+        meta: M,
+        next: F,
+    ) -> Either<Self::CallFuture, X> where
         F: FnOnce(rpc::Call, M) -> X + Send,
-        X: Future<Item = Option<rpc::Output>, Error = ()> + Send + 'static, 
+        X: Future<Output = Option<rpc::Output>> + Send + 'static, 
     {
+        use rpc::futures::FutureExt;
+
         let secret = match self.secret.as_ref() {
             Some(secret) => secret.clone(),
-            None => return Either::B(next(call, meta)),
+            None => return Either::Right(next(call, meta)),
         };
         let address = secret.public().address().to_vec();
         let next_id = || {
@@ -132,9 +140,9 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                     log::debug!("Returning accounts: {:?}", output);
                     output
                 });
-                return Either::A(Either::A(Box::new(res)))
+                return Either::Left(Either::Left(Box::pin(res)))
             },
-            _ => return Either::B(next(call, meta)),
+            _ => return Either::Right(next(call, meta)),
         };
 
         // Acquire lock to make sure we call it sequentially.
@@ -156,13 +164,17 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
         let upstream = self.upstream.clone();
         let upstream2 = upstream.clone();
         let transaction_request = match previous {
-            Some(prev) => Either::A(prev.map_err(|_| ()).then(move |_| upstream2(call))),
-            None => Either::B(upstream2(call)),
+            Some(prev) => Either::Left(prev.then(move |_| upstream2(call))),
+            None => Either::Right(upstream2(call)),
         };
-        let res = transaction_request.join(chain_id).and_then(move |(request, chain_id)| {
+
+        let res = async move {
+            let request = transaction_request.await;
+            let chain_id = chain_id.await;
+
             log::trace!("Got results, parsing composed transaction and chain_id");
             let err = |id, msg: &str| {
-                Either::A(future::ok(Some(rpc::Output::Failure(rpc::Failure {
+                Either::Left(future::ready(Some(rpc::Output::Failure(rpc::Failure {
                     jsonrpc,
                     id,
                     error: rpc::Error {
@@ -183,7 +195,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                         },
                     }
                 },
-                o => return Either::A(future::ok(Some(o.into()))),
+                o => return Either::Left(future::ready(Some(o.into()))),
             };
             let chain_id = match chain_id.expect(PROOF) {
                 rpc::Output::Success(rpc::Success { result, .. }) => {
@@ -196,7 +208,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                         },
                     }
                 },
-                o => return Either::A(future::ok(Some(o.into()))),
+                o => return Either::Left(future::ready(Some(o.into()))),
             };
             // Verify from
             let public = secret.public();
@@ -223,17 +235,17 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             );
             let rlp = Bytes(signed.to_rlp());
 
-            Either::B((upstream)(rpc::Call::MethodCall(rpc::MethodCall {
+            Either::Right((upstream)(rpc::Call::MethodCall(rpc::MethodCall {
                 jsonrpc,
                 id,
                 method: "eth_sendRawTransaction".into(),
                 params: rpc::Params::Array(vec![serde_json::to_value(rlp).unwrap()]),
             })))
-        }).then(move |x| {
+        }.then(move |x| {
             let _ = tx.send(());
             x
         });
-        Either::A(Either::A(Box::new(res)))
+        Either::Left(Either::Left(Box::pin(res)))
     }
 }
 

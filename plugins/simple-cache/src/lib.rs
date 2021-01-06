@@ -145,16 +145,18 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     type Future = rpc::middleware::NoopFuture;
     type CallFuture = Either<
         rpc::middleware::NoopCallFuture,
-        rpc::futures::future::FutureResult<Option<rpc::Output>, ()>,
+        rpc::futures::future::Ready<Option<rpc::Output>>,
     >;
 
 
     fn on_call<F, X>(&self, call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X> where
         F: FnOnce(rpc::Call, M) -> X + Send,
-        X: Future<Item = Option<rpc::Output>, Error = ()> + Send + 'static, 
+        X: Future<Output = Option<rpc::Output>> + Send + 'static, 
     {
+        use rpc::futures::FutureExt;
+
         if !self.enabled {
-            return Either::B(next(call, meta));
+            return Either::Right(next(call, meta));
         }
 
         enum Action {
@@ -185,11 +187,11 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
 
         match action {
             // Fallback
-            Action::Next => Either::B(next(call, meta)),
+            Action::Next => Either::Right(next(call, meta)),
             // TODO [ToDr] Prevent multiple requests being made.
             Action::NextAndCache(hash, method_meta) => {
                 let cached = self.cached.clone();
-                Either::A(Either::A(Box::new(
+                Either::Left(Either::Left(Box::pin(
                     next(call, meta)
                         .map(move |result| {
                             cached.write().insert(hash, (
@@ -201,7 +203,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                 )))
             },
             Action::Return(result) => {
-                Either::A(Either::B(future::done(Ok(result))))
+                Either::Left(Either::Right(future::ready(result)))
             }
         }
 
@@ -227,12 +229,27 @@ mod tests {
     use rpc::Middleware as MiddlewareTrait;
     use super::*;
 
-    fn callback() -> (impl Fn(rpc::Call, ()) -> rpc::futures::future::FutureResult<Option<rpc::Output>, ()>, Arc<atomic::AtomicUsize>) {
+    trait FutExt: std::future::Future {
+        fn wait(self) -> Self::Output;
+    }
+
+    impl<F> FutExt for F where
+        F: std::future::Future,
+    {
+        fn wait(self) -> Self::Output {
+            rpc::futures::executor::block_on(self)
+        }
+    }
+
+    fn callback() -> (
+        impl Fn(rpc::Call, ()) -> rpc::futures::future::Ready<Option<rpc::Output>>,
+        Arc<atomic::AtomicUsize>,
+    ) {
         let called = Arc::new(atomic::AtomicUsize::new(0));
         let called2 = called.clone();
         let next = move |_, _| {
             called2.fetch_add(1, atomic::Ordering::SeqCst);
-            rpc::futures::future::ok(None)
+            rpc::futures::future::ready(None)
         };
 
         (next, called)
@@ -270,8 +287,8 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
-        assert_eq!(res1, Ok(None));
-        assert_eq!(res2, Ok(None));
+        assert_eq!(res1, None);
+        assert_eq!(res2, None);
     }
 
     #[test]
@@ -291,8 +308,8 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 1);
-        assert_eq!(res1, Ok(None));
-        assert_eq!(res2, Ok(None));
+        assert_eq!(res1, None);
+        assert_eq!(res2, None);
     }
 
     #[test]
@@ -312,8 +329,8 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
-        assert_eq!(res1, Ok(None));
-        assert_eq!(res2, Ok(None));
+        assert_eq!(res1, None);
+        assert_eq!(res2, None);
     }
 
     #[test]
@@ -335,9 +352,9 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
-        assert_eq!(res1, Ok(None));
-        assert_eq!(res2, Ok(None));
-        assert_eq!(res3, Ok(None));
+        assert_eq!(res1, None);
+        assert_eq!(res2, None);
+        assert_eq!(res3, None);
     }
 
     // TODO [ToDr] Implement me
@@ -359,8 +376,8 @@ mod tests {
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 1);
-        assert_eq!(res1.wait(), Ok(None));
-        assert_eq!(res2.wait(), Ok(None));
+        assert_eq!(res1.wait(), None);
+        assert_eq!(res2.wait(), None);
     }
 
 }

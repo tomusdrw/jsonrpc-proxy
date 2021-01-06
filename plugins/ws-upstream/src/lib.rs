@@ -15,31 +15,21 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 //! WebSocket Upstream Transport
 
 #![warn(missing_docs)]
-#![warn(unused_extern_crates)]
-
-extern crate cli_params;
-extern crate jsonrpc_core as rpc;
-extern crate jsonrpc_pubsub as pubsub;
-extern crate serde_json;
-extern crate websocket;
-extern crate tokio;
-extern crate upstream;
-
-#[macro_use]
-extern crate log;
 
 pub mod config;
 
 use std::{
     sync::{atomic, Arc},
 };
-use rpc::{
+use jsonrpc_core::{
     futures::{
-        self, Future, Sink, Stream,
-        sync::{mpsc, oneshot},
+        self, Future, TryFutureExt, FutureExt, StreamExt,
+        channel::{mpsc, oneshot},
+        future::{self, Either},
     },
 };
 use upstream::{
@@ -47,11 +37,7 @@ use upstream::{
     helpers,
     shared::{PendingKind, Shared}, 
 };
-use websocket::{
-    ClientBuilder,
-    OwnedMessage,
-    url::Url,
-};
+use websocket::OwnedMessage;
 
 struct WebSocketHandler {
     shared: Arc<Shared>,
@@ -59,10 +45,11 @@ struct WebSocketHandler {
 }
 
 impl WebSocketHandler {
-    pub fn process_message(&self, message: OwnedMessage) -> impl Future<Item = (), Error = String> {
-        use self::futures::{IntoFuture, future::Either};
-
-        Either::B(match message {
+    pub fn process_message(
+        &self,
+        message: OwnedMessage,
+    ) -> impl Future<Output = Result<(), String>> {
+        future::ready(match message {
             OwnedMessage::Close(e) => self.write_sender
                 .unbounded_send(OwnedMessage::Close(e))
                 .map_err(|e| format!("Error sending close message: {:?}", e)),
@@ -72,12 +59,11 @@ impl WebSocketHandler {
             OwnedMessage::Text(t) => {
                 // First check if it's a notification for a subscription
                 if let Some(id) = helpers::peek_subscription_id(t.as_bytes()) {
-                    return if let Some(stream) = self.shared.notify_subscription(&id, t) {
-                        Either::A(stream)
-                    } else {
-                        warn!("Got notification for unknown subscription (id: {:?})", id);
-                        Either::B(Ok(()).into_future())
-                    }
+                    return future::ready(self.shared.notify_subscription(&id, t)
+                        .unwrap_or_else(|| {
+                            log::warn!("Got notification for unknown subscription (id: {:?})", id);
+                            Ok(())
+                        }))
                 }
 
                 // then check if it's one of the pending calls
@@ -90,48 +76,71 @@ impl WebSocketHandler {
                             PendingKind::Subscribe(session, unsubscribe) => {
                                 let subscription_id = helpers::peek_result(t.as_bytes())
                                     .as_ref()
-                                    .and_then(pubsub::SubscriptionId::parse_value);
+                                    .and_then(jsonrpc_pubsub::SubscriptionId::parse_value);
                                 if let Some(subscription_id) = subscription_id {
                                     self.shared.add_subscription(subscription_id, session, unsubscribe);
                                 }                    
                             },
                         }
 
-                        trace!("Responding to (id: {:?}) with {:?}", id, t);
+                        log::trace!("Responding to (id: {:?}) with {:?}", id, t);
                         if let Err(err) = sink.send(t) {
-                            warn!("Sending a response to deallocated channel: {:?}", err);
+                            log::warn!("Sending a response to deallocated channel: {:?}", err);
                         }
                     } else {
-                        warn!("Got response for unknown request (id: {:?})", id);
+                        log::warn!("Got response for unknown request (id: {:?})", id);
                     }
                 } else {
-                    warn!("Got unexpected notification: {:?}", t);
+                    log::warn!("Got unexpected notification: {:?}", t);
                 }
 
                 Ok(())
             }
             _ => Ok(()),
-        }.into_future())
+        })
+    }
+}
+
+type Spawnable = Box<dyn Future<Output = ()> + Send + Unpin>;
+
+/// A tokio abstraction.
+pub trait Spawn: Send + Sync {
+    /// Spawn a task in the background.
+    fn spawn(&self, ft: Spawnable);
+}
+
+impl<F: Fn(Spawnable) + Send + Sync> Spawn for F {
+    fn spawn(&self, ft: Spawnable) {
+        (*self)(ft)
     }
 }
 
 /// WebSocket transport
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct WebSocket {
     id: Arc<atomic::AtomicUsize>,
-    url: Url,
+    url: url::Url,
     shared: Arc<Shared>,
+    spawn: Arc<dyn Spawn>,
     write_sender: mpsc::UnboundedSender<OwnedMessage>,
 }
 
+impl std::fmt::Debug for WebSocket {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        fmt.debug_struct("WebSocket")
+            .field("id", &self.id)
+            .field("url", &self.url)
+            .field("shared", &self.shared)
+            .finish()
+    }
+}
 
 impl WebSocket {
     /// Create new WebSocket transport within existing Event Loop.
     pub fn new(
-        runtime: &mut tokio::runtime::current_thread::Runtime,
         params: Vec<config::Param>,
+        spawn_tasks: impl Spawn + 'static,
     ) -> Result<Self, String> {
-
         let mut url = "ws://127.0.0.1:9944".parse().expect("Valid address given.");
 
         for p in params {
@@ -148,12 +157,23 @@ impl WebSocket {
         let shared = Arc::new(Shared::default());
 
         let ws_future = {
+            use futures::TryStreamExt;
+            use futures::compat::{Future01CompatExt};
+            use futures01::{Stream, Sink, Future};
+
             let handler = WebSocketHandler {
                 shared: shared.clone(),
                 write_sender: write_sender.clone(),
             };
 
-            ClientBuilder::from_url(&url)
+            let write_receiver = write_receiver
+                .map(|msg| {
+                    log::trace!("Sending request: {:?}", msg);
+                    msg
+                })
+                .map(|x| Ok(x) as Result<_, websocket::WebSocketError>)
+                .compat();
+            websocket::ClientBuilder::from_url(&url)
                 .async_connect_insecure()
                 .map(|(duplex, _)| duplex.split())
                 .map_err(|e| format!("{:?}", e))
@@ -161,41 +181,51 @@ impl WebSocket {
                     let reader = stream
                         .map_err(|e| format!("{:?}", e))
                         .for_each(move |message| {
-                            trace!("Message received: {:?}", message);
-                            handler.process_message(message)
+                            log::trace!("Message received: {:?}", message);
+                            handler.process_message(message).compat()
                         });
 
                     let writer = sink
-                        .send_all(write_receiver.map_err(|_| websocket::WebSocketError::NoDataAvailable))
+                        .send_all(write_receiver)
                         .map_err(|e| format!("{:?}", e))
                         .map(|_| ());
 
                     reader.join(writer)
                 })
+                .compat()
         };
 
-        runtime.spawn(ws_future.map(|_| ()).map_err(|err| {
-            error!("WebSocketError: {:?}", err);
-        }));
+        spawn_tasks.spawn(Box::new(ws_future.map_err(|err| {
+            log::error!("WebSocketError: {:?}", err);
+        }).map(|_| ())));
 
         Ok(Self {
             id: Arc::new(atomic::AtomicUsize::new(1)),
             url,
             shared,
+            spawn: Arc::new(spawn_tasks),
             write_sender,
         })
     }
 
-    fn write_and_wait(&self, call: rpc::Call, response: Option<oneshot::Receiver<String>>) -> impl Future<Item = Option<rpc::Output>, Error = String>
-    {
-        let request = rpc::types::to_string(&call).expect("jsonrpc-core are infallible");
+    fn write_and_wait(
+        &self,
+        call: jsonrpc_core::Call,
+        response: Option<oneshot::Receiver<String>>,
+    ) -> impl Future<Output = Result<Option<jsonrpc_core::Output>, String>> {
+        let request = jsonrpc_core::types::to_string(&call).expect("jsonrpc-core are infallible");
         let result = self.write_sender
             .unbounded_send(OwnedMessage::Text(request))
             .map_err(|e| format!("Error sending request: {:?}", e));
 
-        futures::done(result)
-            .and_then(|_| response.map_err(|e| format!("{:?}", e)))
-            .map(|out| out.and_then(|out| serde_json::from_str(&out).ok()))
+        future::ready(result)
+            .and_then(|_| match response {
+                None => Either::Left(future::ready(Ok(None))),
+                Some(res) => res
+                    .map_ok(|out| serde_json::from_str(&out).ok())
+                    .map_err(|e| format!("{:?}", e))
+                    .right_future()
+            })
     }
 }
 
@@ -204,10 +234,13 @@ impl WebSocket {
 // we disconnect from the upstream as well and all the subscriptions are dropped automatically.
 impl upstream::Transport for WebSocket {
     type Error = String;
-    type Future = Box<dyn Future<Item = Option<rpc::Output>, Error = Self::Error> + Send>;
+    type Future = Box<dyn Future<Output = Result<
+        Option<jsonrpc_core::Output>,
+        Self::Error,
+    >> + Send + Unpin>;
 
-    fn send(&self, call: rpc::Call) -> Self::Future {
-        trace!("Calling: {:?}", call);
+    fn send(&self, call: jsonrpc_core::Call) -> Self::Future {
+        log::trace!("Calling: {:?}", call);
 
         // TODO [ToDr] Mangle ids per sender or just ensure atomicity
         let rx = {
@@ -220,8 +253,8 @@ impl upstream::Transport for WebSocket {
 
     fn subscribe(
         &self,
-        call: rpc::Call,
-        session: Option<Arc<pubsub::Session>>,
+        call: jsonrpc_core::Call,
+        session: Option<Arc<jsonrpc_pubsub::Session>>,
         subscription: Subscription,
     ) -> Self::Future {
         let session = match session {
@@ -231,7 +264,7 @@ impl upstream::Transport for WebSocket {
             }
         };
 
-        trace!("Subscribing to {:?}: {:?}", subscription, call);
+        log::trace!("Subscribing to {:?}: {:?}", subscription, call);
 
         // TODO [ToDr] Mangle ids per sender or just ensure atomicity
         let rx = {
@@ -239,15 +272,20 @@ impl upstream::Transport for WebSocket {
             let id = helpers::get_id(&call);
             self.shared.add_pending(id, PendingKind::Subscribe(session, Box::new(move |subs_id| {
                 // Create unsubscribe request.
-                let call = rpc::Call::MethodCall(rpc::MethodCall {
-                    jsonrpc: Some(rpc::Version::V2),
-                    id: rpc::Id::Num(1),
+                let call = jsonrpc_core::Call::MethodCall(jsonrpc_core::MethodCall {
+                    jsonrpc: Some(jsonrpc_core::Version::V2),
+                    id: jsonrpc_core::Id::Num(1),
                     method: subscription.unsubscribe.clone(),
-                    params: rpc::Params::Array(vec![subs_id.into()]).into(),
+                    params: jsonrpc_core::Params::Array(vec![subs_id.into()]).into(),
                 });
-                if let Err(e) = ws.unsubscribe(call, subscription.clone()).wait() {
-                    warn!("Unable to auto-unsubscribe from '{}': {:?}", subscription.name, e);
-                }
+                let name = subscription.name.clone();
+                let fut = ws.unsubscribe(call, subscription.clone())
+                    .map_err(move |e| {
+                        log::warn!("Unable to auto-unsubscribe from '{}': {:?}", name, e);
+                    })
+                    .map(|_| ());
+
+                ws.spawn.spawn(Box::new(fut));
             })))
         };
 
@@ -256,11 +294,11 @@ impl upstream::Transport for WebSocket {
 
     fn unsubscribe(
         &self,
-        call: rpc::Call,
+        call: jsonrpc_core::Call,
         subscription: Subscription,
     ) -> Self::Future {
 
-        trace!("Unsubscribing from {:?}: {:?}", subscription, call);
+        log::trace!("Unsubscribing from {:?}: {:?}", subscription, call);
 
         // Remove the subscription id
         if let Some(subscription_id) = helpers::get_unsubscribe_id(&call) {

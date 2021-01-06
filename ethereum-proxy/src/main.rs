@@ -20,20 +20,12 @@
 //! The proxy contains a pre-configured list of cacheable methods and upstream subscriptions.
 
 #![warn(missing_docs)]
-#![warn(unused_extern_crates)]
 
-#[macro_use]
-extern crate clap;
-extern crate cli;
-extern crate cli_params;
-extern crate ethereum_proxy_accounts as accounts;
-extern crate generic_proxy;
-extern crate jsonrpc_core as rpc;
-extern crate simple_cache;
-extern crate upstream;
+use ethereum_proxy_accounts as accounts;
 
-fn main() {
-    let yml = load_yaml!("./cli.yml");
+#[tokio::main]
+async fn main() {
+    let yml = clap::load_yaml!("./cli.yml");
     let app = clap::App::from_yaml(yml).set_term_width(80);
 
     generic_proxy::run_app(
@@ -138,14 +130,16 @@ impl generic_proxy::Extension for Extension {
     }
 
     fn parse_matches(matches: &clap::ArgMatches, upstream: impl upstream::Transport) -> Self::Middleware {
-        use rpc::futures::Future;
+        use jsonrpc_core::futures::{TryFutureExt, FutureExt};
         let all_params = accounts::config::params();    
 
         let params = cli::parse_matches(matches, &all_params).ok().unwrap_or_else(Vec::new);
-        let call = move |call: rpc::Call| {
-            Box::new(upstream.send(call).map_err(|e| {
-                log::error!("Upstream error: {:?}", e)
-            })) as _
+        let call = move |call: jsonrpc_core::Call| {
+            Box::new(
+                upstream.send(call)
+                    .map_err(|e| log::error!("Upstream error: {:?}", e))
+                    .map(|res| res.unwrap_or(None))
+            ) as _
         };
         accounts::Middleware::new(std::sync::Arc::new(Box::new(call)), &params)
     }

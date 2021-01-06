@@ -3,16 +3,17 @@ name = "rpc-proxy"
 version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 license = "GPL-3.0-or-later"
+edition = "2018"
 
 [dependencies]
 clap = { version = "2.33", features = ["yaml"] }
 cli = { path = "../proxy/cli" }
 env_logger = "0.8"
-jsonrpc-core = "15.1"
-jsonrpc-pubsub = "15.1"
+jsonrpc-core = "16.0"
+jsonrpc-pubsub = "16.0"
+tokio = { version = "1.0", features = ["full"] }
 permissioning = { path = "../plugins/permissioning" }
 simple-cache = { path = "../plugins/simple-cache" }
-tokio = "0.1"
 transports = { path = "../proxy/transports" }
 upstream = { path = "../plugins/upstream" }
 ws-upstream = { path = "../plugins/ws-upstream" }

@@ -35,6 +35,8 @@ const PREFIX: &str = "http";
 pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>> where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
+    S::Future: Unpin,
+    S::CallFuture: Unpin,
 {
     vec![
         param("port", "9934", "Configures HTTP server listening port.", |value| {
@@ -141,6 +143,8 @@ pub fn start<T, M, S>(
     T: Into<rpc::MetaIoHandler<M, S>>,
     M: rpc::Metadata + Default + From<Option<Arc<pubsub::Session>>>,
     S: rpc::Middleware<M>,
+    S::Future: Unpin,
+    S::CallFuture: Unpin,
 {
     let mut builder = http::ServerBuilder::new(io);
     let mut address = "127.0.0.1:9934".parse().unwrap();
@@ -159,6 +163,8 @@ fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser:
     X: Configurator<M, S> + 'static,
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
+    S::Future: Unpin,
+    S::CallFuture: Unpin,
 {
     Param {
         category: CATEGORY.into(),

@@ -26,10 +26,7 @@ use parking_lot::{Mutex, RwLock};
 use pubsub;
 use rpc::{
     self,
-    futures::{
-        self, Future, Sink,
-        sync::oneshot,
-    },
+    futures::channel::oneshot,
 };
 
 /// Pending request details
@@ -71,7 +68,7 @@ impl Shared {
         -> Option<oneshot::Receiver<String>>
     {
         if let Some(id) = id {
-            let (tx, rx) = futures::oneshot();
+            let (tx, rx) = oneshot::channel();
             self.pending.lock().insert(id.clone(), (tx, kind));
             Some(rx)
         } else {
@@ -104,13 +101,13 @@ impl Shared {
 
     /// Forwards a notification to given subscription.
     pub fn notify_subscription(&self, id: &pubsub::SubscriptionId, msg: String) 
-        -> Option<impl Future<Item = (), Error = String>>
+        -> Option<Result<(), String>>
     {
         if let Some(session) = self.subscriptions.read().get(&id) {
             if let Some(session) = session.upgrade() {
                 return Some(session
                     .sender()
-                    .send(msg)
+                    .unbounded_send(msg)
                     .map_err(|e| format!("Error sending notification: {:?}", e))
                     .map(|_| ())
                 )

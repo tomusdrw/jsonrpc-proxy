@@ -21,23 +21,8 @@
 //! - Supports simple time-based cache
 
 #![warn(missing_docs)]
-#![warn(unused_extern_crates)]
 
-extern crate clap;
-extern crate cli;
-extern crate env_logger;
-extern crate jsonrpc_core as rpc;
-extern crate jsonrpc_pubsub;
-
-extern crate permissioning;
-extern crate simple_cache;
-extern crate transports;
-extern crate upstream;
-extern crate ws_upstream;
-
-extern crate tokio;
-
-use tokio::runtime::current_thread::Runtime;
+use jsonrpc_core as rpc;
 
 use std::sync::Arc;
 use clap::App;
@@ -76,7 +61,10 @@ pub trait Extension {
     fn configure_app<'a, 'b>(&'a mut self, app: clap::App<'a, 'b>) -> clap::App<'a, 'b>;
 
     /// Parse matches and create the middleware.
-    fn parse_matches(matches: &clap::ArgMatches, upstream: impl upstream::Transport) -> Self::Middleware;
+    fn parse_matches(
+        matches: &clap::ArgMatches,
+        upstream: impl upstream::Transport,
+    ) -> Self::Middleware;
 }
 
 impl Extension for () {
@@ -97,7 +85,10 @@ pub fn run_app<E: Extension>(
     simple_cache_methods: Vec<simple_cache::Method>,
     upstream_subscriptions: Vec<upstream::Subscription>,
     mut extension: E,
-) {
+) where
+    <E::Middleware as rpc::Middleware<Metadata>>::Future: Unpin,
+    <E::Middleware as rpc::Middleware<Metadata>>::CallFuture: Unpin,
+{
     env_logger::init();
     let args = ::std::env::args_os();
 
@@ -137,10 +128,9 @@ pub fn run_app<E: Extension>(
     let permissioning_params = cli::parse_matches(&matches, &permissioning_params).unwrap();
 
     // Actually run the damn thing.
-    let mut runtime = Runtime::new().unwrap();
     let transport = ws_upstream::WebSocket::new(
-        &mut runtime,
         ws_upstream_params,
+        |fut| std::mem::drop(tokio::spawn(fut))
     ).unwrap();
 
     let extra = E::parse_matches(&matches, transport.clone());
@@ -151,10 +141,10 @@ pub fn run_app<E: Extension>(
         &permissioning_params,
         &upstream_params,
     );
-    let _server1 = transports::ws::start(ws_params, h()).unwrap();
+    let server1 = transports::ws::start(ws_params, h()).unwrap();
     let _server2 = transports::http::start(http_params, h()).unwrap();
     let _server3 = transports::tcp::start(tcp_params, h()).unwrap();
     let _server4 = transports::ipc::start(ipc_params, h()).unwrap();
-
-    runtime.run().unwrap();
+    
+    server1.wait().unwrap();
 }

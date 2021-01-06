@@ -3,14 +3,16 @@ name = "ethereum-proxy"
 version = "0.1.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 license = "GPL-3.0-or-later"
+edition = "2018"
 
 [dependencies]
 clap = { version = "2.33", features = ["yaml"] }
 cli = { path = "../proxy/cli" }
 cli-params = { path = "../proxy/cli-params" }
 ethereum-proxy-accounts = { path = "./plugins/accounts" }
-jsonrpc-core = "15.1"
+jsonrpc-core = "16.0"
 log = "0.4"
 rpc-proxy = { path = "../generic-proxy" }
 simple-cache = { path = "../plugins/simple-cache" }
+tokio = { version = "1.0", features = ["macros"] }
 upstream = { path = "../plugins/upstream" }
