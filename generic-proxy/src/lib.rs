@@ -21,20 +21,8 @@
 //! - Supports simple time-based cache
 
 #![warn(missing_docs)]
-#![warn(unused_extern_crates)]
 
-extern crate clap;
-extern crate cli;
-extern crate env_logger;
-extern crate jsonrpc_core as rpc;
-extern crate jsonrpc_pubsub;
-
-extern crate permissioning;
-extern crate simple_cache;
-extern crate transports;
-extern crate upstream;
-extern crate ws_upstream;
-
+use jsonrpc_core as rpc;
 
 use std::sync::Arc;
 use clap::App;

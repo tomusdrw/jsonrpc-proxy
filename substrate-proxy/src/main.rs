@@ -20,17 +20,10 @@
 //! The proxy contains a pre-configured list of cacheable methods and upstream subscriptions.
 
 #![warn(missing_docs)]
-#![warn(unused_extern_crates)]
-
-#[macro_use]
-extern crate clap;
-extern crate generic_proxy;
-extern crate simple_cache;
-extern crate upstream;
 
 #[tokio::main]
-fn main() {
-    let yml = load_yaml!("./cli.yml");
+async fn main() {
+    let yml = clap::load_yaml!("./cli.yml");
     let app = clap::App::from_yaml(yml).set_term_width(80);
 
     generic_proxy::run_app(

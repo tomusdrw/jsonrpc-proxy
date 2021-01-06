@@ -1888,6 +1888,7 @@ dependencies = [
  "clap",
  "rpc-proxy",
  "simple-cache",
+ "tokio 1.0.1",
  "upstream",
 ]
 
