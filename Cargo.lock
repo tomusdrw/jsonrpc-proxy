@@ -375,7 +375,7 @@ checksum = "f26ecb66b4bdca6c1409b40fb255eefc2bd4f6d135dab3c3124f80ffa2a9661e"
 dependencies = [
  "atty",
  "humantime",
- "log 0.4.11",
+ "log 0.4.13",
  "regex",
  "termcolor",
 ]
@@ -402,7 +402,7 @@ dependencies = [
  "cli-params",
  "ethereum-proxy-accounts",
  "jsonrpc-core",
- "log 0.4.11",
+ "log 0.4.13",
  "rpc-proxy",
  "simple-cache",
  "tokio 1.0.1",
@@ -417,7 +417,7 @@ dependencies = [
  "ethereum-transaction",
  "ethsign",
  "jsonrpc-core",
- "log 0.4.11",
+ "log 0.4.13",
  "serde_json",
 ]
 
@@ -427,7 +427,7 @@ version = "0.4.0"
 dependencies = [
  "ethereum-types",
  "impl-serde 0.1.1",
- "log 0.4.11",
+ "log 0.4.13",
  "rlp",
  "serde",
  "tiny-keccak 1.5.0",
@@ -649,7 +649,7 @@ dependencies = [
  "aho-corasick",
  "bstr",
  "fnv",
- "log 0.4.11",
+ "log 0.4.13",
  "regex",
 ]
 
@@ -665,7 +665,7 @@ dependencies = [
  "futures 0.1.29",
  "http",
  "indexmap",
- "log 0.4.11",
+ "log 0.4.13",
  "slab",
  "string",
  "tokio-io",
@@ -750,7 +750,7 @@ dependencies = [
  "httparse",
  "iovec",
  "itoa",
- "log 0.4.11",
+ "log 0.4.13",
  "net2",
  "rustc_version",
  "time",
@@ -858,7 +858,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a47c4c3ac843f9a4238943f97620619033dadef4b378cd1e8addd170de396b3"
 dependencies = [
  "futures 0.3.8",
- "log 0.4.11",
+ "log 0.4.13",
  "serde",
  "serde_derive",
  "serde_json",
@@ -875,7 +875,7 @@ dependencies = [
  "hyper 0.12.35",
  "jsonrpc-core",
  "jsonrpc-server-utils",
- "log 0.4.11",
+ "log 0.4.13",
  "net2",
  "parking_lot 0.11.1",
  "unicase 2.5.1",
@@ -891,7 +891,7 @@ dependencies = [
  "futures 0.3.8",
  "jsonrpc-core",
  "jsonrpc-server-utils",
- "log 0.4.11",
+ "log 0.4.13",
  "parity-tokio-ipc",
  "parking_lot 0.11.1",
  "tokio-service",
@@ -906,7 +906,7 @@ dependencies = [
  "futures 0.3.8",
  "jsonrpc-core",
  "lazy_static",
- "log 0.4.11",
+ "log 0.4.13",
  "parking_lot 0.11.1",
  "rand 0.7.2",
  "serde",
@@ -923,7 +923,7 @@ dependencies = [
  "globset",
  "jsonrpc-core",
  "lazy_static",
- "log 0.4.11",
+ "log 0.4.13",
  "tokio 0.1.22",
  "tokio-codec",
  "unicase 2.5.1",
@@ -939,7 +939,7 @@ dependencies = [
  "futures 0.3.8",
  "jsonrpc-core",
  "jsonrpc-server-utils",
- "log 0.4.11",
+ "log 0.4.13",
  "parking_lot 0.11.1",
  "tokio-service",
 ]
@@ -954,7 +954,7 @@ dependencies = [
  "futures 0.3.8",
  "jsonrpc-core",
  "jsonrpc-server-utils",
- "log 0.4.11",
+ "log 0.4.13",
  "parity-ws",
  "parking_lot 0.11.1",
  "slab",
@@ -1018,14 +1018,14 @@ version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e19e8d5c34a3e0e2223db8e060f9e8264aeeb5c5fc64a4ee9965c062211c024b"
 dependencies = [
- "log 0.4.11",
+ "log 0.4.13",
 ]
 
 [[package]]
 name = "log"
-version = "0.4.11"
+version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fabed175da42fed1fa0746b0ea71f412aa9d35e76e95e59b192c64b9dc2bf8b"
+checksum = "fcf3805d4480bb5b86070dcfeb9e2cb2ebc148adb753c5cca5f884d1d65a42b2"
 dependencies = [
  "cfg-if 0.1.10",
 ]
@@ -1077,7 +1077,7 @@ dependencies = [
  "iovec",
  "kernel32-sys",
  "libc",
- "log 0.4.11",
+ "log 0.4.13",
  "miow 0.2.1",
  "net2",
  "slab",
@@ -1091,7 +1091,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e50ae3f04d169fcc9bde0b547d1c205219b7157e07ded9c5aff03e0637cb3ed7"
 dependencies = [
  "libc",
- "log 0.4.11",
+ "log 0.4.13",
  "miow 0.3.6",
  "ntapi",
  "winapi 0.3.8",
@@ -1104,7 +1104,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46e73a04c2fa6250b8d802134d56d554a9ec2922bf977777c805ea5def61ce40"
 dependencies = [
  "lazycell",
- "log 0.4.11",
+ "log 0.4.13",
  "mio 0.6.19",
  "slab",
 ]
@@ -1115,7 +1115,7 @@ version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f5e374eff525ce1c5b7687c4cef63943e7686524a387933ad27ca7ec43779cb3"
 dependencies = [
- "log 0.4.11",
+ "log 0.4.13",
  "mio 0.6.19",
  "miow 0.3.6",
  "winapi 0.3.8",
@@ -1242,7 +1242,7 @@ dependencies = [
  "bytes 0.4.12",
  "futures 0.1.29",
  "libc",
- "log 0.4.11",
+ "log 0.4.13",
  "mio-named-pipes",
  "miow 0.3.6",
  "rand 0.7.2",
@@ -1261,7 +1261,7 @@ dependencies = [
  "byteorder",
  "bytes 0.4.12",
  "httparse",
- "log 0.4.11",
+ "log 0.4.13",
  "mio 0.6.19",
  "mio-extras",
  "rand 0.7.2",
@@ -1356,7 +1356,7 @@ dependencies = [
  "cli-params",
  "fnv",
  "jsonrpc-core",
- "log 0.4.11",
+ "log 0.4.13",
  "serde",
  "serde_derive",
  "serde_json",
@@ -2076,7 +2076,7 @@ checksum = "5090db468dad16e1a7a54c8c67280c5e4b544f3d3e018f0b913b400261f85926"
 dependencies = [
  "bytes 0.4.12",
  "futures 0.1.29",
- "log 0.4.11",
+ "log 0.4.13",
 ]
 
 [[package]]
@@ -2112,7 +2112,7 @@ dependencies = [
  "crossbeam-utils",
  "futures 0.1.29",
  "lazy_static",
- "log 0.4.11",
+ "log 0.4.13",
  "mio 0.6.19",
  "num_cpus",
  "parking_lot 0.9.0",
@@ -2166,7 +2166,7 @@ dependencies = [
  "crossbeam-utils",
  "futures 0.1.29",
  "lazy_static",
- "log 0.4.11",
+ "log 0.4.13",
  "num_cpus",
  "slab",
  "tokio-executor",
@@ -2192,7 +2192,7 @@ checksum = "f02298505547f73e60f568359ef0d016d5acd6e830ab9bc7c4a5b3403440121b"
 dependencies = [
  "bytes 0.4.12",
  "futures 0.1.29",
- "log 0.4.11",
+ "log 0.4.13",
  "mio 0.6.19",
  "tokio-codec",
  "tokio-io",
@@ -2209,7 +2209,7 @@ dependencies = [
  "futures 0.1.29",
  "iovec",
  "libc",
- "log 0.4.11",
+ "log 0.4.13",
  "mio 0.6.19",
  "mio-uds",
  "tokio-codec",
@@ -2234,7 +2234,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "jsonrpc-tcp-server",
  "jsonrpc-ws-server",
- "log 0.4.11",
+ "log 0.4.13",
 ]
 
 [[package]]
@@ -2334,7 +2334,7 @@ dependencies = [
  "fnv",
  "jsonrpc-core",
  "jsonrpc-pubsub",
- "log 0.4.11",
+ "log 0.4.13",
  "parking_lot 0.11.1",
  "serde",
  "serde_derive",
@@ -2384,7 +2384,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6395efa4784b027708f7451087e647ec73cc74f5d9bc2e418404248d679a230"
 dependencies = [
  "futures 0.1.29",
- "log 0.4.11",
+ "log 0.4.13",
  "try-lock",
 ]
 
@@ -2492,7 +2492,7 @@ dependencies = [
  "futures 0.1.29",
  "jsonrpc-core",
  "jsonrpc-pubsub",
- "log 0.4.11",
+ "log 0.4.13",
  "serde_json",
  "upstream",
  "url 1.7.2",
