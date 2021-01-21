@@ -401,7 +401,7 @@ dependencies = [
  "cli",
  "cli-params",
  "ethereum-proxy-accounts",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "log 0.4.13",
  "rpc-proxy",
  "simple-cache",
@@ -416,7 +416,7 @@ dependencies = [
  "cli-params",
  "ethereum-transaction",
  "ethsign",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "log 0.4.13",
  "serde_json",
 ]
@@ -865,6 +865,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsonrpc-core"
+version = "17.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07569945133257ff557eb37b015497104cea61a2c9edaf126c1cbd6e8332397f"
+dependencies = [
+ "futures 0.3.8",
+ "log 0.4.13",
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
 name = "jsonrpc-http-server"
 version = "16.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -873,7 +886,7 @@ dependencies = [
  "futures 0.1.29",
  "futures 0.3.8",
  "hyper 0.12.35",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "jsonrpc-server-utils",
  "log 0.4.13",
  "net2",
@@ -889,7 +902,7 @@ checksum = "5366606925cca07597504c739272493668997e06dcee96b14ffc9ac87944779b"
 dependencies = [
  "futures 0.1.29",
  "futures 0.3.8",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "jsonrpc-server-utils",
  "log 0.4.13",
  "parity-tokio-ipc",
@@ -899,12 +912,12 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-pubsub"
-version = "16.0.0"
+version = "17.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a1132f6d03de286dd21bde88191af63b5189214574f7b9cbac8e0027c732394"
+checksum = "0c48dbebce7a9c88ab272a4db7d6478aa4c6d9596e6c086366e89efc4e9ed89e"
 dependencies = [
  "futures 0.3.8",
- "jsonrpc-core",
+ "jsonrpc-core 17.0.0",
  "lazy_static",
  "log 0.4.13",
  "parking_lot 0.11.1",
@@ -921,7 +934,7 @@ dependencies = [
  "bytes 0.4.12",
  "futures 0.1.29",
  "globset",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "lazy_static",
  "log 0.4.13",
  "tokio 0.1.22",
@@ -937,7 +950,7 @@ checksum = "fe2b0ac94d02924ca68c6839a336a2ed59ede0566e591c69fe5f37e414e7d802"
 dependencies = [
  "futures 0.1.29",
  "futures 0.3.8",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "jsonrpc-server-utils",
  "log 0.4.13",
  "parking_lot 0.11.1",
@@ -952,7 +965,7 @@ checksum = "cb39207d2e6487b8bb11c5f88db5386d864735ee42fe0102ff7032b6fb907d75"
 dependencies = [
  "futures 0.1.29",
  "futures 0.3.8",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "jsonrpc-server-utils",
  "log 0.4.13",
  "parity-ws",
@@ -1355,7 +1368,7 @@ version = "0.1.0"
 dependencies = [
  "cli-params",
  "fnv",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "log 0.4.13",
  "serde",
  "serde_derive",
@@ -1663,7 +1676,7 @@ dependencies = [
  "clap",
  "cli",
  "env_logger",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "jsonrpc-pubsub",
  "permissioning",
  "simple-cache",
@@ -1814,7 +1827,7 @@ version = "0.1.0"
 dependencies = [
  "cli-params",
  "fnv",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "parking_lot 0.11.1",
  "serde",
  "serde_derive",
@@ -2228,7 +2241,7 @@ name = "transports"
 version = "0.1.0"
 dependencies = [
  "cli-params",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "jsonrpc-http-server",
  "jsonrpc-ipc-server",
  "jsonrpc-pubsub",
@@ -2332,7 +2345,7 @@ version = "0.1.0"
 dependencies = [
  "cli-params",
  "fnv",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "jsonrpc-pubsub",
  "log 0.4.13",
  "parking_lot 0.11.1",
@@ -2490,7 +2503,7 @@ version = "0.1.0"
 dependencies = [
  "cli-params",
  "futures 0.1.29",
- "jsonrpc-core",
+ "jsonrpc-core 16.0.0",
  "jsonrpc-pubsub",
  "log 0.4.13",
  "serde_json",
