@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,16 +17,13 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 //! Shared pieces for building upstream transport.
 
+use parking_lot::{Mutex, RwLock};
+use pubsub;
+use rpc::{self, futures::channel::oneshot};
 use std::{
     collections::HashMap,
     fmt,
     sync::{Arc, Weak},
-};
-use parking_lot::{Mutex, RwLock};
-use pubsub;
-use rpc::{
-    self,
-    futures::channel::oneshot,
 };
 
 /// Pending request details
@@ -64,9 +61,7 @@ impl Shared {
     /// Adds a new request to the list of pending requests
     ///
     /// We are awaiting the response for those requests.
-    pub fn add_pending(&self, id: Option<&rpc::Id>, kind: PendingKind) 
-        -> Option<oneshot::Receiver<String>>
-    {
+    pub fn add_pending(&self, id: Option<&rpc::Id>, kind: PendingKind) -> Option<oneshot::Receiver<String>> {
         if let Some(id) = id {
             let (tx, rx) = oneshot::channel();
             self.pending.lock().insert(id.clone(), (tx, kind));
@@ -84,7 +79,12 @@ impl Shared {
     }
 
     /// Add a new subscription id and it's correlation with the session.
-    pub fn add_subscription(&self, id: pubsub::SubscriptionId, session: Arc<pubsub::Session>, unsubscribe: Unsubscribe) {
+    pub fn add_subscription(
+        &self,
+        id: pubsub::SubscriptionId,
+        session: Arc<pubsub::Session>,
+        unsubscribe: Unsubscribe,
+    ) {
         // make sure to send unsubscribe request and remove the subscription.
         let id2 = id.clone();
         session.on_drop(move || unsubscribe(id2));
@@ -100,17 +100,16 @@ impl Shared {
     }
 
     /// Forwards a notification to given subscription.
-    pub fn notify_subscription(&self, id: &pubsub::SubscriptionId, msg: String) 
-        -> Option<Result<(), String>>
-    {
+    pub fn notify_subscription(&self, id: &pubsub::SubscriptionId, msg: String) -> Option<Result<(), String>> {
         if let Some(session) = self.subscriptions.read().get(&id) {
             if let Some(session) = session.upgrade() {
-                return Some(session
-                    .sender()
-                    .unbounded_send(msg)
-                    .map_err(|e| format!("Error sending notification: {:?}", e))
-                    .map(|_| ())
-                )
+                return Some(
+                    session
+                        .sender()
+                        .unbounded_send(msg)
+                        .map_err(|e| format!("Error sending notification: {:?}", e))
+                        .map(|_| ()),
+                );
             } else {
                 error!("Session is not available and subscription was not removed.");
             }

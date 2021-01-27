@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -30,7 +30,8 @@ pub fn peek_subscription_id(bytes: &[u8]) -> Option<pubsub::SubscriptionId> {
         .ok()
         .and_then(|notification| {
             if let rpc::Params::Map(ref map) = notification.params {
-                map.get("subscription").and_then(|v| pubsub::SubscriptionId::parse_value(v))
+                map.get("subscription")
+                    .and_then(|v| pubsub::SubscriptionId::parse_value(v))
             } else {
                 None
             }
@@ -42,9 +43,7 @@ pub fn peek_subscription_id(bytes: &[u8]) -> Option<pubsub::SubscriptionId> {
 /// TODO [ToDr] The implementation should deserialize only result part,
 /// not the entire `rpc::Success`
 pub fn peek_result(bytes: &[u8]) -> Option<rpc::Value> {
-    serde_json::from_slice::<rpc::Success>(bytes)
-        .ok()
-        .map(|res| res.result)
+    serde_json::from_slice::<rpc::Success>(bytes).ok().map(|res| res.result)
 }
 
 /// Attempt to peek the id of a call.
@@ -78,19 +77,23 @@ pub fn get_id(call: &rpc::Call) -> Option<&rpc::Id> {
 /// Extract the first parameter of a call and parse it as subscription id.
 pub fn get_unsubscribe_id(call: &rpc::Call) -> Option<pubsub::SubscriptionId> {
     match *call {
-        rpc::Call::MethodCall(rpc::MethodCall { ref params, .. }) |
-        rpc::Call::Notification(rpc::Notification { ref params, .. }) => match params {
-            rpc::Params::Array(ref vec) if !vec.is_empty() => {
-                pubsub::SubscriptionId::parse_value(&vec[0])
-            },
+        rpc::Call::MethodCall(rpc::MethodCall { ref params, .. })
+        | rpc::Call::Notification(rpc::Notification { ref params, .. }) => match params {
+            rpc::Params::Array(ref vec) if !vec.is_empty() => pubsub::SubscriptionId::parse_value(&vec[0]),
             _ => {
-                warn!("Invalid unsubscribe params: {:?}. Perhaps it's not really an unsubscribe call?", call);
+                warn!(
+                    "Invalid unsubscribe params: {:?}. Perhaps it's not really an unsubscribe call?",
+                    call
+                );
                 None
-            },
+            }
         },
         _ => {
-            warn!("Invalid unsubscribe payload: {:?}. Perhaps it's not really an unsubscribe call?", call);
+            warn!(
+                "Invalid unsubscribe payload: {:?}. Perhaps it's not really an unsubscribe call?",
+                call
+            );
             None
-        },
+        }
     }
 }

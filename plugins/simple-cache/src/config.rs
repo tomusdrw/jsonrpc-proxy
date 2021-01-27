@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,9 +17,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 //! CLI configuration for simple cache.
 
-use std::{fs, io};
 use cli_params;
 use serde_json;
+use std::{fs, io};
 use Method;
 
 /// A configuration option to apply.
@@ -30,24 +30,23 @@ pub enum Param {
 
 /// Returns a list of supported configuration parameters.
 pub fn params() -> Vec<cli_params::Param<Param>> {
-    vec![
-        cli_params::Param::new(
-            "Simple Cache",
-            "simple-cache-config",
-            "A path to a JSON file containing a list of methods that should be cached. See examples for the file schema.",
-            "-",
-            |path: String| {
-                if &path == "-" {
-                    return Ok(Param::Config(Default::default()))
-                }
-
-                let file = fs::File::open(&path).map_err(|e| format!("Can't open cache file at {}: {:?}", path, e))?;
-                let buf_file = io::BufReader::new(file);
-                let methods: Cache = serde_json::from_reader(buf_file).map_err(|e| format!("Invalid JSON at {}: {:?}", path, e))?;
-                Ok(Param::Config(methods))
+    vec![cli_params::Param::new(
+        "Simple Cache",
+        "simple-cache-config",
+        "A path to a JSON file containing a list of methods that should be cached. See examples for the file schema.",
+        "-",
+        |path: String| {
+            if &path == "-" {
+                return Ok(Param::Config(Default::default()));
             }
-        )
-    ]
+
+            let file = fs::File::open(&path).map_err(|e| format!("Can't open cache file at {}: {:?}", path, e))?;
+            let buf_file = io::BufReader::new(file);
+            let methods: Cache =
+                serde_json::from_reader(buf_file).map_err(|e| format!("Invalid JSON at {}: {:?}", path, e))?;
+            Ok(Param::Config(methods))
+        },
+    )]
 }
 
 /// Add methods given as the first parameter to the config in one of the params.
@@ -67,7 +66,7 @@ pub struct Cache {
     /// If not enabled method definitions are ignored.
     pub enabled: bool,
     /// Per-method definitions
-    pub methods: Vec<Method>
+    pub methods: Vec<Method>,
 }
 impl Default for Cache {
     fn default() -> Self {

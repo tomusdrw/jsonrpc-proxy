@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -34,15 +34,9 @@ extern crate serde_derive;
 #[macro_use]
 extern crate log;
 
-use std::{
-    collections::HashMap,
-    sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
-use rpc::{
-    futures::Future,
-    futures::future::Either,
-};
+use rpc::futures::{future::Either, Future};
 
 pub mod config;
 pub mod helpers;
@@ -77,11 +71,7 @@ pub trait Transport: Send + Sync + 'static {
     ) -> Self::Future;
 
     /// Send unsubscribe call upstream.
-    fn unsubscribe(
-        &self,
-        call: rpc::Call,
-        subscription: Subscription,
-    ) -> Self::Future;
+    fn unsubscribe(&self, call: rpc::Call, subscription: Subscription) -> Self::Future;
 
     /// Send a regular call upstream.
     fn send(&self, call: rpc::Call) -> Self::Future;
@@ -100,10 +90,7 @@ pub struct Middleware<T> {
 
 impl<T> Middleware<T> {
     /// Create new passthrough middleware with given upstream and the list of pubsub methods.
-    pub fn new(
-        transport: T,
-        params: &[config::Param],
-    ) -> Self {
+    pub fn new(transport: T, params: &[config::Param]) -> Self {
         let mut pubsub_methods = vec![];
         for p in params {
             match p {
@@ -113,31 +100,36 @@ impl<T> Middleware<T> {
 
         Self {
             transport,
-            subscribe_methods: pubsub_methods.iter().map(|s| (s.subscribe.clone(), s.clone())).collect(),
+            subscribe_methods: pubsub_methods
+                .iter()
+                .map(|s| (s.subscribe.clone(), s.clone()))
+                .collect(),
             unsubscribe_methods: pubsub_methods.into_iter().map(|s| (s.unsubscribe.clone(), s)).collect(),
         }
     }
 }
 
-impl<T, M> rpc::Middleware<M> for Middleware<T> where
+impl<T, M> rpc::Middleware<M> for Middleware<T>
+where
     T: Transport + 'static,
     M: rpc::Metadata + Into<Option<Arc<pubsub::Session>>>,
 {
     type Future = rpc::middleware::NoopFuture;
     type CallFuture = rpc::middleware::NoopCallFuture;
 
-    fn on_call<F, X>(&self, request: rpc::Call, meta: M, _next: F) -> Either<Self::CallFuture, X> where
+    fn on_call<F, X>(&self, request: rpc::Call, meta: M, _next: F) -> Either<Self::CallFuture, X>
+    where
         F: FnOnce(rpc::Call, M) -> X + Send,
-        X: Future<Output = Option<rpc::Output>> + Send + 'static, 
+        X: Future<Output = Option<rpc::Output>> + Send + 'static,
     {
-        use rpc::futures::{TryFutureExt, FutureExt};
+        use rpc::futures::{FutureExt, TryFutureExt};
 
         let (subscribe, unsubscribe) = {
             let method = helpers::get_method_name(&request);
             if let Some(method) = method {
                 match self.subscribe_methods.get(method).cloned() {
                     Some(subscription) => (Some(subscription), None),
-                    None => (None, self.unsubscribe_methods.get(method).cloned())
+                    None => (None, self.unsubscribe_methods.get(method).cloned()),
                 }
             } else {
                 (None, None)
@@ -146,24 +138,27 @@ impl<T, M> rpc::Middleware<M> for Middleware<T> where
 
         if let Some(subscription) = subscribe {
             return Either::Left(Box::pin(
-                self.transport.subscribe(request, meta.into(), subscription)
+                self.transport
+                    .subscribe(request, meta.into(), subscription)
                     .map_err(|e| warn!("Failed to subscribe: {:?}", e))
-                    .map(|v| v.unwrap_or(None))
-            ))
+                    .map(|v| v.unwrap_or(None)),
+            ));
         }
 
         if let Some(subscription) = unsubscribe {
             return Either::Left(Box::pin(
-                self.transport.unsubscribe(request, subscription)
+                self.transport
+                    .unsubscribe(request, subscription)
                     .map_err(|e| warn!("Failed to unsubscribe: {:?}", e))
-                    .map(|v| v.unwrap_or(None))
-            ))
+                    .map(|v| v.unwrap_or(None)),
+            ));
         }
 
         Either::Left(Box::pin(
-            self.transport.send(request)
+            self.transport
+                .send(request)
                 .map_err(|e| warn!("Failed to send: {:?}", e))
-                .map(|v| v.unwrap_or(None))
+                .map(|v| v.unwrap_or(None)),
         ))
     }
 }

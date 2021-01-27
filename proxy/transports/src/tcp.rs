@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 use std::{
     io,
-    net::{SocketAddr, Ipv4Addr},
+    net::{Ipv4Addr, SocketAddr},
     sync::Arc,
 };
 
@@ -32,7 +32,8 @@ const CATEGORY: &str = "TCP Server";
 const PREFIX: &str = "tcp";
 
 /// Returns CLI configuration options for the TCP server.
-pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>> where
+pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>>
+where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
     S::Future: Unpin,
@@ -67,12 +68,10 @@ pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>> where
         ),
     ]
 }
- 
+
 /// Starts TCP server on given handler.
-pub fn start<T, M, S>(
-    params: Vec<Box<dyn Configurator<M, S>>>,
-    io: T,
-) -> io::Result<tcp::Server> where
+pub fn start<T, M, S>(params: Vec<Box<dyn Configurator<M, S>>>, io: T) -> io::Result<tcp::Server>
+where
     T: Into<rpc::MetaIoHandler<M, S>>,
     M: rpc::Metadata + Default + From<Option<Arc<pubsub::Session>>>,
     S: rpc::Middleware<M>,
@@ -95,25 +94,41 @@ pub fn start<T, M, S>(
 }
 
 /// Configures the TCP server.
-pub trait Configurator<M, S> where
+pub trait Configurator<M, S>
+where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
 {
     /// Configure the server.
-    fn configure(&self, address: &mut SocketAddr, builder: tcp::ServerBuilder<M, S>) -> io::Result<tcp::ServerBuilder<M, S>>;
+    fn configure(
+        &self,
+        address: &mut SocketAddr,
+        builder: tcp::ServerBuilder<M, S>,
+    ) -> io::Result<tcp::ServerBuilder<M, S>>;
 }
 
-impl<F, M, S> Configurator<M, S> for F where 
+impl<F, M, S> Configurator<M, S> for F
+where
     F: Fn(&mut SocketAddr, tcp::ServerBuilder<M, S>) -> io::Result<tcp::ServerBuilder<M, S>>,
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
 {
-    fn configure(&self, address: &mut SocketAddr, builder: tcp::ServerBuilder<M, S>) -> io::Result<tcp::ServerBuilder<M, S>> {
+    fn configure(
+        &self,
+        address: &mut SocketAddr,
+        builder: tcp::ServerBuilder<M, S>,
+    ) -> io::Result<tcp::ServerBuilder<M, S>> {
         (*self)(address, builder)
     }
 }
 
-fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser: F) -> Param<Box<dyn Configurator<M, S>>> where
+fn param<M, S, F, X>(
+    name: &str,
+    default_value: &str,
+    description: &str,
+    parser: F,
+) -> Param<Box<dyn Configurator<M, S>>>
+where
     F: Fn(String) -> Result<X, String> + 'static,
     X: Configurator<M, S> + 'static,
     M: rpc::Metadata,
@@ -126,8 +141,6 @@ fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser:
         name: format!("{}-{}", PREFIX, name),
         description: description.replace('\n', " "),
         default_value: default_value.into(),
-        parser: Box::new(move |val: String| {
-            Ok(Box::new(parser(val)?) as _)
-        }),
+        parser: Box::new(move |val: String| Ok(Box::new(parser(val)?) as _)),
     }
 }

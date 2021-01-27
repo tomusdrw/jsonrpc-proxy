@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -27,16 +27,14 @@ pub enum Param {
 
 /// Returns all configuration parameters for WS upstream.
 pub fn params() -> Vec<cli_params::Param<Param>> {
-    vec![
-        cli_params::Param::new(
-            "WebSockets upstream",
-            "upstream-ws",
-            "Address of the parent WebSockets RPC server that we should connect to.",
-            "ws://127.0.0.1:9944",
-            move |val: String| {
-                let url = val.parse().map_err(|e| format!("Invalid upstream address: {:?}", e))?;
-                Ok(Param::Url(url))
-            },
-        )
-    ]
+    vec![cli_params::Param::new(
+        "WebSockets upstream",
+        "upstream-ws",
+        "Address of the parent WebSockets RPC server that we should connect to.",
+        "ws://127.0.0.1:9944",
+        move |val: String| {
+            let url = val.parse().map_err(|e| format!("Invalid upstream address: {:?}", e))?;
+            Ok(Param::Url(url))
+        },
+    )]
 }

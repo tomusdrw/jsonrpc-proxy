@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -26,11 +26,12 @@ extern crate cli_params as params;
 /// Adds plugin parameters to the CLI application.
 pub fn configure_app<'a, 'b, Exec>(mut app: clap::App<'a, 'b>, params: &'a [params::Param<Exec>]) -> clap::App<'a, 'b> {
     for p in params {
-        app = app.arg(clap::Arg::with_name(&p.name)
-            .long(&p.name)
-            .takes_value(true)
-            .help(&p.description)
-            .default_value(&p.default_value)
+        app = app.arg(
+            clap::Arg::with_name(&p.name)
+                .long(&p.name)
+                .takes_value(true)
+                .help(&p.description)
+                .default_value(&p.default_value),
         )
     }
     app

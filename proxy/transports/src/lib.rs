@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -29,7 +29,7 @@ extern crate jsonrpc_ipc_server;
 extern crate jsonrpc_tcp_server;
 extern crate jsonrpc_ws_server;
 
-pub mod ws;
 pub mod http;
-pub mod tcp;
 pub mod ipc;
+pub mod tcp;
+pub mod ws;
