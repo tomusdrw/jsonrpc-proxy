@@ -2508,7 +2508,7 @@ dependencies = [
  "log 0.4.14",
  "serde_json",
  "upstream",
- "url 1.7.2",
+ "url 2.1.0",
  "websocket",
 ]
 

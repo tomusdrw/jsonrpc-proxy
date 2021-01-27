@@ -13,5 +13,5 @@ jsonrpc-pubsub = "17.0"
 log = "0.4"
 serde_json = "1.0"
 upstream = { path = "../upstream" }
-url = "1.0"
+url = "2.1"
 websocket = { version = "0.26", default-features = false, features = ["async"] }
