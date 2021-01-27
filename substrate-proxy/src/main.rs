@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -69,15 +69,13 @@ async fn main() {
                 name: "state_storage".into(),
             },
         ],
-        ()
+        (),
     )
 }
 
 fn cache(name: &str) -> simple_cache::Method {
     simple_cache::Method::new(
-        name, 
+        name,
         simple_cache::CacheEviction::Time(::std::time::Duration::from_secs(3)),
     )
 }
-
-

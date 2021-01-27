@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -111,7 +111,7 @@ async fn main() {
 
 fn cache(name: &str) -> simple_cache::Method {
     simple_cache::Method::new(
-        name, 
+        name,
         simple_cache::CacheEviction::Time(::std::time::Duration::from_secs(3)),
     )
 }
@@ -125,20 +125,26 @@ impl generic_proxy::Extension for Extension {
     type Middleware = accounts::Middleware;
 
     fn configure_app<'a, 'b>(&'a mut self, app: clap::App<'a, 'b>) -> clap::App<'a, 'b> {
-        self.params = accounts::config::params();    
+        self.params = accounts::config::params();
         cli::configure_app(app, &self.params)
     }
 
-    fn parse_matches(matches: &clap::ArgMatches, upstream: impl upstream::Transport) -> Self::Middleware {
-        use jsonrpc_core::futures::{TryFutureExt, FutureExt};
-        let all_params = accounts::config::params();    
+    fn parse_matches(
+        matches: &clap::ArgMatches,
+        upstream: impl upstream::Transport,
+    ) -> Self::Middleware {
+        use jsonrpc_core::futures::{FutureExt, TryFutureExt};
+        let all_params = accounts::config::params();
 
-        let params = cli::parse_matches(matches, &all_params).ok().unwrap_or_else(Vec::new);
+        let params = cli::parse_matches(matches, &all_params)
+            .ok()
+            .unwrap_or_else(Vec::new);
         let call = move |call: jsonrpc_core::Call| {
             Box::new(
-                upstream.send(call)
+                upstream
+                    .send(call)
                     .map_err(|e| log::error!("Upstream error: {:?}", e))
-                    .map(|res| res.unwrap_or(None))
+                    .map(|res| res.unwrap_or(None)),
             ) as _
         };
         accounts::Middleware::new(std::sync::Arc::new(Box::new(call)), &params)

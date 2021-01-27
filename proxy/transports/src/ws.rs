@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 //! WebSockets server for the proxy.
 
 use std::{
-    net::{SocketAddr, Ipv4Addr},
+    net::{Ipv4Addr, SocketAddr},
     sync::Arc,
 };
 
@@ -31,28 +31,46 @@ const CATEGORY: &str = "WebSockets Server";
 const PREFIX: &str = "websockets";
 
 /// Returns CLI configuration options for the WS server.
-pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>> where
+pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>>
+where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
     S::Future: Unpin,
     S::CallFuture: Unpin,
 {
     vec![
-        param("port", "9945", "Configures WebSockets server listening port.", |value| {
-            let port: u16 = value.parse().map_err(|e| format!("Invalid port number {}: {}", value, e))?;
-            Ok(move |address: &mut SocketAddr, builder| {
-                address.set_port(port);
-                Ok(builder)
-            })
-        }),
-        param("ip", "127.0.0.1", "Configures WebSockets server interface.", |value| {
-            let ip: Ipv4Addr = value.parse().map_err(|e| format!("Invalid port number {}: {}", value, e))?;
-            Ok(move |address: &mut SocketAddr, builder| {
-                address.set_ip(ip.into());
-                Ok(builder)
-            })
-        }),
-        param("hosts", "none", r#"
+        param(
+            "port",
+            "9945",
+            "Configures WebSockets server listening port.",
+            |value| {
+                let port: u16 = value
+                    .parse()
+                    .map_err(|e| format!("Invalid port number {}: {}", value, e))?;
+                Ok(move |address: &mut SocketAddr, builder| {
+                    address.set_port(port);
+                    Ok(builder)
+                })
+            },
+        ),
+        param(
+            "ip",
+            "127.0.0.1",
+            "Configures WebSockets server interface.",
+            |value| {
+                let ip: Ipv4Addr = value
+                    .parse()
+                    .map_err(|e| format!("Invalid port number {}: {}", value, e))?;
+                Ok(move |address: &mut SocketAddr, builder| {
+                    address.set_ip(ip.into());
+                    Ok(builder)
+                })
+            },
+        ),
+        param(
+            "hosts",
+            "none",
+            r#"
 List of allowed Host header values. This option will
 validate the Host header sent by the browser, it is
 additional security against some attack vectors. Special
@@ -63,12 +81,17 @@ options: "all", "none"."#,
                     "*" | "all" | "any" => None,
                     _ => Some(value.split(',').map(Into::into).collect()),
                 };
-                Ok(move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
-                    Ok(builder.allowed_hosts(hosts.clone().into()))
-                })
-            }
+                Ok(
+                    move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
+                        Ok(builder.allowed_hosts(hosts.clone().into()))
+                    },
+                )
+            },
         ),
-        param("origins", "none", r#"
+        param(
+            "origins",
+            "none",
+            r#"
 Specify Origin header values allowed to connect. Special
 options: "all", "none". "#,
             |value| {
@@ -78,27 +101,34 @@ options: "all", "none". "#,
                     _ => Some(value.split(',').map(Into::into).collect()),
                 };
 
-                Ok(move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
-                    Ok(builder.allowed_origins(origins.clone().into()))
-                })
-            }
+                Ok(
+                    move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
+                        Ok(builder.allowed_origins(origins.clone().into()))
+                    },
+                )
+            },
         ),
-        param("max-connections", "100", "Maximum number of allowed concurrent WebSockets JSON-RPC connections.",
+        param(
+            "max-connections",
+            "100",
+            "Maximum number of allowed concurrent WebSockets JSON-RPC connections.",
             |value| {
-                let max_connections: usize = value.parse().map_err(|e| format!("Invalid number of connections {}: {}", value, e))?;
-                Ok(move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
-                    Ok(builder.max_connections(max_connections))
-                })
-            }
+                let max_connections: usize = value
+                    .parse()
+                    .map_err(|e| format!("Invalid number of connections {}: {}", value, e))?;
+                Ok(
+                    move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
+                        Ok(builder.max_connections(max_connections))
+                    },
+                )
+            },
         ),
     ]
 }
- 
+
 /// Starts WebSockets server on given handler.
-pub fn start<T, M, S>(
-    params: Vec<Box<dyn Configurator<M, S>>>,
-    io: T,
-) -> ws::Result<ws::Server> where
+pub fn start<T, M, S>(params: Vec<Box<dyn Configurator<M, S>>>, io: T) -> ws::Result<ws::Server>
+where
     T: Into<rpc::MetaIoHandler<M, S>>,
     M: rpc::Metadata + Default + From<Option<Arc<pubsub::Session>>>,
     S: rpc::Middleware<M>,
@@ -121,25 +151,41 @@ pub fn start<T, M, S>(
 }
 
 /// Configures the WS server.
-pub trait Configurator<M, S> where
+pub trait Configurator<M, S>
+where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
 {
     /// Configure the server.
-    fn configure(&self, address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>) -> ws::Result<ws::ServerBuilder<M, S>>;
+    fn configure(
+        &self,
+        address: &mut SocketAddr,
+        builder: ws::ServerBuilder<M, S>,
+    ) -> ws::Result<ws::ServerBuilder<M, S>>;
 }
 
-impl<F, M, S> Configurator<M, S> for F where 
+impl<F, M, S> Configurator<M, S> for F
+where
     F: Fn(&mut SocketAddr, ws::ServerBuilder<M, S>) -> ws::Result<ws::ServerBuilder<M, S>>,
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
 {
-    fn configure(&self, address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>) -> ws::Result<ws::ServerBuilder<M, S>> {
+    fn configure(
+        &self,
+        address: &mut SocketAddr,
+        builder: ws::ServerBuilder<M, S>,
+    ) -> ws::Result<ws::ServerBuilder<M, S>> {
         (*self)(address, builder)
     }
 }
 
-fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser: F) -> Param<Box<dyn Configurator<M, S>>> where
+fn param<M, S, F, X>(
+    name: &str,
+    default_value: &str,
+    description: &str,
+    parser: F,
+) -> Param<Box<dyn Configurator<M, S>>>
+where
     F: Fn(String) -> Result<X, String> + 'static,
     X: Configurator<M, S> + 'static,
     M: rpc::Metadata,
@@ -152,8 +198,6 @@ fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser:
         name: format!("{}-{}", PREFIX, name),
         description: description.replace('\n', " "),
         default_value: default_value.into(),
-        parser: Box::new(move |val: String| {
-            Ok(Box::new(parser(val)?) as _)
-        }),
+        parser: Box::new(move |val: String| Ok(Box::new(parser(val)?) as _)),
     }
 }

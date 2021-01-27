@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,9 +17,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 //! CLI configuration for simple cache.
 
-use std::{fs, io};
 use cli_params;
 use serde_json;
+use std::{fs, io};
 use Method;
 
 /// A configuration option to apply.
@@ -67,7 +67,7 @@ pub struct Cache {
     /// If not enabled method definitions are ignored.
     pub enabled: bool,
     /// Per-method definitions
-    pub methods: Vec<Method>
+    pub methods: Vec<Method>,
 }
 impl Default for Cache {
     fn default() -> Self {
@@ -84,6 +84,7 @@ mod tests {
 
     #[test]
     fn should_deserialize_example() {
-        let _m: Cache = serde_json::from_slice(include_bytes!("../../../examples/cache.json")).unwrap();
+        let _m: Cache =
+            serde_json::from_slice(include_bytes!("../../../examples/cache.json")).unwrap();
     }
 }

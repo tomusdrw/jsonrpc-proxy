@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,8 @@ pub trait Parser {
     fn parse(&self, value: String) -> Result<Self::Executor, String>;
 }
 
-impl<F, X> Parser for F where
+impl<F, X> Parser for F
+where
     F: Fn(String) -> Result<X, String>,
 {
     type Executor = X;
@@ -52,23 +53,24 @@ pub struct Param<Exec> {
     /// Parameter default value
     pub default_value: String,
     /// Parameter parser
-    pub parser: Box<dyn Parser<Executor=Exec>>,
+    pub parser: Box<dyn Parser<Executor = Exec>>,
 }
 
 impl<X> Param<X> {
     /// Create new parameter definition.
     pub fn new<A, B, C, D, E>(
-        category: A, 
+        category: A,
         name: B,
         description: C,
         default_value: D,
         parser: E,
-    ) -> Self where
+    ) -> Self
+    where
         A: Into<String>,
         B: Into<String>,
         C: Into<String>,
         D: Into<String>,
-        E: Parser<Executor=X> + 'static,
+        E: Parser<Executor = X> + 'static,
     {
         Param {
             category: category.into(),

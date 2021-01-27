@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,10 +17,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 //! IPC server for the proxy.
 
-use std::{
-    io,
-    sync::Arc,
-};
+use std::{io, sync::Arc};
 
 use jsonrpc_ipc_server as ipc;
 use params::Param;
@@ -31,7 +28,8 @@ const CATEGORY: &str = "IPC Server";
 const PREFIX: &str = "ipc";
 
 /// Returns CLI configuration options for the IPC server.
-pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>> where
+pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>>
+where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
     S::Future: Unpin,
@@ -58,21 +56,20 @@ pub fn params<M, S>() -> Vec<Param<Box<dyn Configurator<M, S>>>> where
         ),
     ]
 }
- 
+
 /// Starts IPC server on given handler.
-pub fn start<T, M, S>(
-    params: Vec<Box<dyn Configurator<M, S>>>,
-    io: T,
-) -> io::Result<ipc::Server> where
+pub fn start<T, M, S>(params: Vec<Box<dyn Configurator<M, S>>>, io: T) -> io::Result<ipc::Server>
+where
     T: Into<rpc::MetaIoHandler<M, S>>,
     M: rpc::Metadata + Default + From<Option<Arc<pubsub::Session>>>,
     S: rpc::Middleware<M>,
     S::Future: Unpin,
     S::CallFuture: Unpin,
 {
-    let mut builder = ipc::ServerBuilder::with_meta_extractor(io, |context: &ipc::RequestContext| {
-        Some(Arc::new(pubsub::Session::new(context.sender.clone()))).into()
-    });
+    let mut builder =
+        ipc::ServerBuilder::with_meta_extractor(io, |context: &ipc::RequestContext| {
+            Some(Arc::new(pubsub::Session::new(context.sender.clone()))).into()
+        });
     // should be overwritten by parameters anyway
     let mut path = "./jsonrpc.ipc".to_owned();
     // configure the server
@@ -86,25 +83,41 @@ pub fn start<T, M, S>(
 }
 
 /// Configures the IPC server.
-pub trait Configurator<M, S> where
+pub trait Configurator<M, S>
+where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
 {
     /// Configure the server.
-    fn configure(&self, path: &mut String, builder: ipc::ServerBuilder<M, S>) -> io::Result<ipc::ServerBuilder<M, S>>;
+    fn configure(
+        &self,
+        path: &mut String,
+        builder: ipc::ServerBuilder<M, S>,
+    ) -> io::Result<ipc::ServerBuilder<M, S>>;
 }
 
-impl<F, M, S> Configurator<M, S> for F where 
+impl<F, M, S> Configurator<M, S> for F
+where
     F: Fn(&mut String, ipc::ServerBuilder<M, S>) -> io::Result<ipc::ServerBuilder<M, S>>,
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
 {
-    fn configure(&self, path: &mut String, builder: ipc::ServerBuilder<M, S>) -> io::Result<ipc::ServerBuilder<M, S>> {
+    fn configure(
+        &self,
+        path: &mut String,
+        builder: ipc::ServerBuilder<M, S>,
+    ) -> io::Result<ipc::ServerBuilder<M, S>> {
         (*self)(path, builder)
     }
 }
 
-fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser: F) -> Param<Box<dyn Configurator<M, S>>> where
+fn param<M, S, F, X>(
+    name: &str,
+    default_value: &str,
+    description: &str,
+    parser: F,
+) -> Param<Box<dyn Configurator<M, S>>>
+where
     F: Fn(String) -> Result<X, String> + 'static,
     X: Configurator<M, S> + 'static,
     M: rpc::Metadata,
@@ -117,8 +130,6 @@ fn param<M, S, F, X>(name: &str, default_value: &str, description: &str, parser:
         name: format!("{}-{}", PREFIX, name),
         description: description.replace('\n', " "),
         default_value: default_value.into(),
-        parser: Box::new(move |val: String| {
-            Ok(Box::new(parser(val)?) as _)
-        }),
+        parser: Box::new(move |val: String| Ok(Box::new(parser(val)?) as _)),
     }
 }

@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -22,27 +22,21 @@
 
 #![warn(missing_docs)]
 
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::sync::atomic::{self, AtomicUsize};
+use ethereum_transaction::{Bytes, SignTransaction, SignedTransaction, Transaction, U256};
+use ethsign::{KeyFile, Protected, SecretKey};
 use jsonrpc_core::{
     self as rpc,
-    futures::{Future, channel::oneshot},
     futures::future::{self, Either},
+    futures::{channel::oneshot, Future},
 };
-use ethsign::{SecretKey, Protected, KeyFile};
-use ethereum_transaction::{Bytes, SignTransaction, SignedTransaction, Transaction, U256};
+use std::sync::atomic::{self, AtomicUsize};
+use std::sync::Arc;
+use std::sync::Mutex;
 
 pub mod config;
 
 type Upstream = Box<
-    dyn Fn(rpc::Call) -> Box<
-        dyn Future<Output = Option<rpc::Output>>
-        + Send
-        + Unpin
-    >
-    + Send
-    + Sync
+    dyn Fn(rpc::Call) -> Box<dyn Future<Output = Option<rpc::Output>> + Send + Unpin> + Send + Sync,
 >;
 
 /// A middleware intercepting transaction requests and signing them locally.
@@ -74,7 +68,7 @@ impl Middleware {
             // TODO [ToDr] Panicking here is crap.
             key.to_secret_key(&pass).unwrap()
         });
-     
+
         Self {
             secret,
             upstream,
@@ -88,19 +82,13 @@ const PROOF: &str = "Output always produced for `MethodCall`";
 
 impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     type Future = rpc::middleware::NoopFuture;
-    type CallFuture = Either<
-        rpc::middleware::NoopCallFuture,
-        rpc::futures::future::Ready<Option<rpc::Output>>,
-    >;
+    type CallFuture =
+        Either<rpc::middleware::NoopCallFuture, rpc::futures::future::Ready<Option<rpc::Output>>>;
 
-    fn on_call<F, X>(
-        &self,
-        mut call: rpc::Call,
-        meta: M,
-        next: F,
-    ) -> Either<Self::CallFuture, X> where
+    fn on_call<F, X>(&self, mut call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X>
+    where
         F: FnOnce(rpc::Call, M) -> X + Send,
-        X: Future<Output = Option<rpc::Output>> + Send + 'static, 
+        X: Future<Output = Option<rpc::Output>> + Send + 'static,
     {
         use rpc::futures::FutureExt;
 
@@ -116,32 +104,33 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
 
         log::trace!("Parsing call: {:?}", call);
         let (jsonrpc, id) = match call {
-            rpc::Call::MethodCall(rpc::MethodCall { ref mut method, ref jsonrpc, ref mut id, .. })
-                if method == "eth_sendTransaction" || method == "parity_postTransaction" => 
-            {
+            rpc::Call::MethodCall(rpc::MethodCall {
+                ref mut method,
+                ref jsonrpc,
+                ref mut id,
+                ..
+            }) if method == "eth_sendTransaction" || method == "parity_postTransaction" => {
                 let orig_id = id.clone();
                 *method = "parity_composeTransaction".into();
                 *id = next_id();
                 (*jsonrpc, orig_id)
-            },
+            }
             // prepend signing account to the accounts list.
             rpc::Call::MethodCall(rpc::MethodCall { ref mut method, .. })
                 if method == "eth_accounts" =>
             {
                 let res = next(call, meta).map(|mut output| {
-                    if let Some(
-                        rpc::Output::Success(ref mut s)
-                    ) = output {
+                    if let Some(rpc::Output::Success(ref mut s)) = output {
                         let rpc::Success { ref mut result, .. } = s;
                         if let rpc::Value::Array(ref mut vec) = result {
-                             vec.insert(0, serde_json::to_value(Bytes(address)).unwrap());
+                            vec.insert(0, serde_json::to_value(Bytes(address)).unwrap());
                         }
                     }
                     log::debug!("Returning accounts: {:?}", output);
                     output
                 });
-                return Either::Left(Either::Left(Box::pin(res)))
-            },
+                return Either::Left(Either::Left(Box::pin(res)));
+            }
             _ => return Either::Right(next(call, meta)),
         };
 
@@ -191,10 +180,10 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                         Ok(tx) => tx,
                         Err(e) => {
                             log::error!("Unable to deserialize transaction request: {:?}", e);
-                            return err(id, "Unable to construct transaction")
-                        },
+                            return err(id, "Unable to construct transaction");
+                        }
                     }
-                },
+                }
                 o => return Either::Left(future::ready(Some(o.into()))),
             };
             let chain_id = match chain_id.expect(PROOF) {
@@ -204,10 +193,10 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                         Ok(id) => id.as_u64(),
                         Err(e) => {
                             log::error!("Unable to deserialize transaction request: {:?}", e);
-                            return err(id, "Unable to construct transaction")
-                        },
+                            return err(id, "Unable to construct transaction");
+                        }
                     }
-                },
+                }
                 o => return Either::Left(future::ready(Some(o.into()))),
             };
             // Verify from
@@ -215,14 +204,19 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             let address = public.address();
             let from = request.from;
             if from.as_bytes() != address {
-                log::error!("Expected to send from {:?}, but only support {:?}", from, address);
-                return err(id, "Invalid `from` address")
+                log::error!(
+                    "Expected to send from {:?}, but only support {:?}",
+                    from,
+                    address
+                );
+                return err(id, "Invalid `from` address");
             }
             // Calculate unsigned hash
             let hash = SignTransaction {
                 transaction: std::borrow::Cow::Borrowed(&request),
                 chain_id,
-            }.hash();
+            }
+            .hash();
             // Sign replay-protected hash.
             let signature = secret.sign(&hash).unwrap();
             // Construct signed RLP
@@ -231,7 +225,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                 chain_id,
                 signature.v,
                 signature.r,
-                signature.s
+                signature.s,
             );
             let rlp = Bytes(signed.to_rlp());
 
@@ -241,11 +235,11 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                 method: "eth_sendRawTransaction".into(),
                 params: rpc::Params::Array(vec![serde_json::to_value(rlp).unwrap()]),
             })))
-        }.then(move |x| {
+        }
+        .then(move |x| {
             let _ = tx.send(());
             x
         });
         Either::Left(Either::Left(Box::pin(res)))
     }
 }
-

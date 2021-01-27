@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -33,18 +33,18 @@ extern crate twox_hash;
 #[macro_use]
 extern crate serde_derive;
 
+use fnv::FnvHashMap;
+use parking_lot::RwLock;
+use rpc::{
+    futures::future::{self, Either},
+    futures::Future,
+};
 use std::{
-    io,
     hash::{Hash as HashTrait, Hasher},
+    io,
     sync::Arc,
     time,
 };
-use fnv::FnvHashMap;
-use rpc::{
-    futures::Future,
-    futures::future::{self, Either},
-};
-use parking_lot::RwLock;
 
 type Hash = u64;
 
@@ -88,7 +88,8 @@ impl Method {
     fn hash(&self, parameters: &rpc::Params) -> Hash {
         let mut hasher = twox_hash::XxHash::default();
         self.name.hash(&mut hasher);
-        serde_json::to_writer(HashWriter(&mut hasher), parameters).expect("HashWriter never fails.");
+        serde_json::to_writer(HashWriter(&mut hasher), parameters)
+            .expect("HashWriter never fails.");
         hasher.finish()
     }
 
@@ -115,10 +116,7 @@ impl Method {
 pub struct Middleware {
     enabled: bool,
     cacheable: FnvHashMap<String, Method>,
-    cached: Arc<RwLock<FnvHashMap<
-        Hash, 
-        (Option<rpc::Output>, MethodMeta),
-    >>>,
+    cached: Arc<RwLock<FnvHashMap<Hash, (Option<rpc::Output>, MethodMeta)>>>,
 }
 
 impl Middleware {
@@ -135,7 +133,11 @@ impl Middleware {
 
         Middleware {
             enabled: cache.enabled,
-            cacheable: cache.methods.into_iter().map(|x| (x.name.clone(), x)).collect(),
+            cacheable: cache
+                .methods
+                .into_iter()
+                .map(|x| (x.name.clone(), x))
+                .collect(),
             cached: Default::default(),
         }
     }
@@ -143,15 +145,13 @@ impl Middleware {
 
 impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     type Future = rpc::middleware::NoopFuture;
-    type CallFuture = Either<
-        rpc::middleware::NoopCallFuture,
-        rpc::futures::future::Ready<Option<rpc::Output>>,
-    >;
+    type CallFuture =
+        Either<rpc::middleware::NoopCallFuture, rpc::futures::future::Ready<Option<rpc::Output>>>;
 
-
-    fn on_call<F, X>(&self, call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X> where
+    fn on_call<F, X>(&self, call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X>
+    where
         F: FnOnce(rpc::Call, M) -> X + Send,
-        X: Future<Output = Option<rpc::Output>> + Send + 'static, 
+        X: Future<Output = Option<rpc::Output>> + Send + 'static,
     {
         use rpc::futures::FutureExt;
 
@@ -166,7 +166,11 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
         }
 
         let action = match call {
-            rpc::Call::MethodCall(rpc::MethodCall { ref method, ref params, .. }) => {
+            rpc::Call::MethodCall(rpc::MethodCall {
+                ref method,
+                ref params,
+                ..
+            }) => {
                 if let Some(method) = self.cacheable.get(method) {
                     let hash = method.hash(params);
                     if let Some((result, meta)) = self.cached.read().get(&hash) {
@@ -181,7 +185,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                 } else {
                     Action::Next
                 }
-            },
+            }
             _ => Action::Next,
         };
 
@@ -191,22 +195,15 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             // TODO [ToDr] Prevent multiple requests being made.
             Action::NextAndCache(hash, method_meta) => {
                 let cached = self.cached.clone();
-                Either::Left(Either::Left(Box::pin(
-                    next(call, meta)
-                        .map(move |result| {
-                            cached.write().insert(hash, (
-                                result.clone(),
-                                method_meta
-                            ));
-                            result
-                        })
-                )))
-            },
-            Action::Return(result) => {
-                Either::Left(Either::Right(future::ready(result)))
+                Either::Left(Either::Left(Box::pin(next(call, meta).map(
+                    move |result| {
+                        cached.write().insert(hash, (result.clone(), method_meta));
+                        result
+                    },
+                ))))
             }
+            Action::Return(result) => Either::Left(Either::Right(future::ready(result))),
         }
-
     }
 }
 
@@ -225,15 +222,16 @@ impl<'a, W: 'a + Hasher> io::Write for HashWriter<'a, W> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{atomic, Arc};
-    use rpc::Middleware as MiddlewareTrait;
     use super::*;
+    use rpc::Middleware as MiddlewareTrait;
+    use std::sync::{atomic, Arc};
 
     trait FutExt: std::future::Future {
         fn wait(self) -> Self::Output;
     }
 
-    impl<F> FutExt for F where
+    impl<F> FutExt for F
+    where
         F: std::future::Future,
     {
         fn wait(self) -> Self::Output {
@@ -265,9 +263,7 @@ mod tests {
     }
 
     fn middleware(config: config::Cache) -> Middleware {
-        Middleware::new(&[
-            config::Param::Config(config)
-        ])
+        Middleware::new(&[config::Param::Config(config)])
     }
 
     #[test]
@@ -275,15 +271,20 @@ mod tests {
         // given
         let middleware = middleware(config::Cache {
             enabled: false,
-            methods: vec![
-                Method::new("eth_getBlock", CacheEviction::Time(time::Duration::from_secs(1))),
-            ],
+            methods: vec![Method::new(
+                "eth_getBlock",
+                CacheEviction::Time(time::Duration::from_secs(1)),
+            )],
         });
         let (next, called) = callback();
 
         // when
-        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
-        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+        let res1 = middleware
+            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
+            .wait();
+        let res2 = middleware
+            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
+            .wait();
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
@@ -296,15 +297,20 @@ mod tests {
         // given
         let middleware = middleware(config::Cache {
             enabled: true,
-            methods: vec![
-                Method::new("eth_getBlock", CacheEviction::Time(time::Duration::from_secs(1))),
-            ],
+            methods: vec![Method::new(
+                "eth_getBlock",
+                CacheEviction::Time(time::Duration::from_secs(1)),
+            )],
         });
         let (next, called) = callback();
 
         // when
-        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
-        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+        let res1 = middleware
+            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
+            .wait();
+        let res2 = middleware
+            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
+            .wait();
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 1);
@@ -317,15 +323,20 @@ mod tests {
         // given
         let middleware = middleware(config::Cache {
             enabled: true,
-            methods: vec![
-                Method::new("eth_getBlock", CacheEviction::Time(time::Duration::from_secs(1))),
-            ],
+            methods: vec![Method::new(
+                "eth_getBlock",
+                CacheEviction::Time(time::Duration::from_secs(1)),
+            )],
         });
         let (next, called) = callback();
 
         // when
-        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz1"), (), &next).wait();
-        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz2"), (), &next).wait();
+        let res1 = middleware
+            .on_call(method_call("eth_getBlock", "xyz1"), (), &next)
+            .wait();
+        let res2 = middleware
+            .on_call(method_call("eth_getBlock", "xyz2"), (), &next)
+            .wait();
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
@@ -338,17 +349,24 @@ mod tests {
         // given
         let middleware = middleware(config::Cache {
             enabled: true,
-            methods: vec![
-                Method::new("eth_getBlock", CacheEviction::Time(time::Duration::from_millis(1))),
-            ],
+            methods: vec![Method::new(
+                "eth_getBlock",
+                CacheEviction::Time(time::Duration::from_millis(1)),
+            )],
         });
         let (next, called) = callback();
 
         // when
-        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
-        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+        let res1 = middleware
+            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
+            .wait();
+        let res2 = middleware
+            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
+            .wait();
         ::std::thread::sleep(time::Duration::from_millis(2));
-        let res3 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+        let res3 = middleware
+            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
+            .wait();
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
@@ -364,9 +382,10 @@ mod tests {
         // given
         let middleware = middleware(config::Cache {
             enabled: true,
-            methods: vec![
-                Method::new("eth_getBlock", CacheEviction::Time(time::Duration::from_secs(1))),
-            ],
+            methods: vec![Method::new(
+                "eth_getBlock",
+                CacheEviction::Time(time::Duration::from_secs(1)),
+            )],
         });
         let (next, called) = callback();
 
@@ -379,5 +398,4 @@ mod tests {
         assert_eq!(res1.wait(), None);
         assert_eq!(res2.wait(), None);
     }
-
 }

@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,13 +24,17 @@ extern crate clap;
 extern crate cli_params as params;
 
 /// Adds plugin parameters to the CLI application.
-pub fn configure_app<'a, 'b, Exec>(mut app: clap::App<'a, 'b>, params: &'a [params::Param<Exec>]) -> clap::App<'a, 'b> {
+pub fn configure_app<'a, 'b, Exec>(
+    mut app: clap::App<'a, 'b>,
+    params: &'a [params::Param<Exec>],
+) -> clap::App<'a, 'b> {
     for p in params {
-        app = app.arg(clap::Arg::with_name(&p.name)
-            .long(&p.name)
-            .takes_value(true)
-            .help(&p.description)
-            .default_value(&p.default_value)
+        app = app.arg(
+            clap::Arg::with_name(&p.name)
+                .long(&p.name)
+                .takes_value(true)
+                .help(&p.description)
+                .default_value(&p.default_value),
         )
     }
     app
@@ -38,7 +42,10 @@ pub fn configure_app<'a, 'b, Exec>(mut app: clap::App<'a, 'b>, params: &'a [para
 
 /// Extract parameters from CLI matches and turn them into parameters executors, which can be used
 /// to configure particular transport or plugin.
-pub fn parse_matches<Exec>(matches: &clap::ArgMatches, params: &[params::Param<Exec>]) -> Result<Vec<Exec>, String> {
+pub fn parse_matches<Exec>(
+    matches: &clap::ArgMatches,
+    params: &[params::Param<Exec>],
+) -> Result<Vec<Exec>, String> {
     params
         .iter()
         .map(|p| {

@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 //! CLI configuration for accounts.
 
 use cli_params;
-use ethsign::{Protected, KeyFile};
+use ethsign::{KeyFile, Protected};
 
 /// A configuration option to apply.
 pub enum Param {
@@ -36,9 +36,7 @@ pub fn params() -> Vec<cli_params::Param<Param>> {
             "account-password",
             "A password to unlock the keyfile.",
             "",
-            |pass: String| {
-                Ok(Param::Pass(pass.into()))
-            }
+            |pass: String| Ok(Param::Pass(pass.into())),
         ),
         cli_params::Param::new(
             "Account to unlock",
@@ -47,14 +45,14 @@ pub fn params() -> Vec<cli_params::Param<Param>> {
             "-",
             |path: String| {
                 if path == "-" {
-                    return Ok(Param::Account(None))
+                    return Ok(Param::Account(None));
                 }
 
                 let file = std::fs::File::open(path).map_err(to_str)?;
                 let key: KeyFile = serde_json::from_reader(file).map_err(to_str)?;
                 Ok(Param::Account(Some(key)))
-            }
-        )
+            },
+        ),
     ]
 }
 

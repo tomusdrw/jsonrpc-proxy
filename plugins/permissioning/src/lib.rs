@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -31,10 +31,7 @@ extern crate serde_json;
 extern crate serde_derive;
 
 use fnv::FnvHashMap;
-use rpc::{
-    futures::Future,
-    futures::future::Either,
-};
+use rpc::{futures::future::Either, futures::Future};
 
 pub mod config;
 
@@ -101,7 +98,11 @@ impl Middleware {
 
         Middleware {
             base: config.policy,
-            permissioned: config.methods.into_iter().map(|x| (x.name.clone(), x)).collect(),
+            permissioned: config
+                .methods
+                .into_iter()
+                .map(|x| (x.name.clone(), x))
+                .collect(),
         }
     }
 }
@@ -110,20 +111,21 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     type Future = rpc::middleware::NoopFuture;
     type CallFuture = rpc::futures::future::Ready<Option<rpc::Output>>;
 
-    fn on_call<F, X>(&self, call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X> where
+    fn on_call<F, X>(&self, call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X>
+    where
         F: Fn(rpc::Call, M) -> X + Send,
-        X: Future<Output = Option<rpc::Output>> + Send + 'static, 
+        X: Future<Output = Option<rpc::Output>> + Send + 'static,
     {
         enum Action {
             Next,
-            Reject
+            Reject,
         }
 
         let to_action = |access: &Access| match *access {
             Access::Allow => Action::Next,
             Access::Deny => Action::Reject,
         };
-        
+
         let action = {
             match call {
                 rpc::Call::MethodCall(rpc::MethodCall { ref method, .. }) => {
@@ -132,15 +134,13 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                     } else {
                         to_action(&self.base)
                     }
-                },
+                }
                 _ => to_action(&self.base),
             }
         };
 
         match action {
-            Action::Next => {
-                Either::Right(next(call, meta))
-            },
+            Action::Next => Either::Right(next(call, meta)),
             Action::Reject => {
                 let (version, id) = get_call_details(call);
 
@@ -170,15 +170,16 @@ fn get_call_details(call: rpc::Call) -> (Option<rpc::Version>, Option<rpc::Id>) 
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use rpc::Middleware as MiddlewareTrait;
     use std::sync::{atomic, Arc};
-    use super::*;
 
     trait FutExt: std::future::Future {
         fn wait(self) -> Self::Output;
     }
 
-    impl<F> FutExt for F where
+    impl<F> FutExt for F
+    where
         F: std::future::Future,
     {
         fn wait(self) -> Self::Output {
@@ -210,9 +211,7 @@ mod tests {
     }
 
     fn middleware(config: Permissioning) -> Middleware {
-        Middleware::new(&[
-            config::Param::Config(config)
-        ])
+        Middleware::new(&[config::Param::Config(config)])
     }
 
     fn not_allowed() -> Option<rpc::Output> {
@@ -224,7 +223,6 @@ mod tests {
                 data: None,
             },
             jsonrpc: Some(rpc::Version::V2),
-
         }))
     }
 
@@ -270,8 +268,8 @@ mod tests {
             methods: vec![],
         });
         let (next, called) = callback();
-        
-         // when
+
+        // when
         let result = middleware.on_call(method_call("eth_getBlock"), (), next);
 
         // then

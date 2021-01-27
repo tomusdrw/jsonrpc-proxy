@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2020 jsonrpc-proxy contributors.
 //
-// This file is part of jsonrpc-proxy 
+// This file is part of jsonrpc-proxy
 // (see https://github.com/tomusdrw/jsonrpc-proxy).
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,8 +24,8 @@
 
 use jsonrpc_core as rpc;
 
-use std::sync::Arc;
 use clap::App;
+use std::sync::Arc;
 
 /// A generic proxy metadata.
 pub type Metadata = Option<Arc<::jsonrpc_pubsub::Session>>;
@@ -74,7 +74,10 @@ impl Extension for () {
         app
     }
 
-    fn parse_matches(_matches: &clap::ArgMatches, _upstream: impl upstream::Transport) -> Self::Middleware {
+    fn parse_matches(
+        _matches: &clap::ArgMatches,
+        _upstream: impl upstream::Transport,
+    ) -> Self::Middleware {
         Default::default()
     }
 }
@@ -128,23 +131,24 @@ pub fn run_app<E: Extension>(
     let permissioning_params = cli::parse_matches(&matches, &permissioning_params).unwrap();
 
     // Actually run the damn thing.
-    let transport = ws_upstream::WebSocket::new(
-        ws_upstream_params,
-        |fut| std::mem::drop(tokio::spawn(fut))
-    ).unwrap();
+    let transport =
+        ws_upstream::WebSocket::new(ws_upstream_params, |fut| std::mem::drop(tokio::spawn(fut)))
+            .unwrap();
 
     let extra = E::parse_matches(&matches, transport.clone());
-    let h = || handler(
-        transport.clone(),
-        extra.clone(),
-        &cache_params,
-        &permissioning_params,
-        &upstream_params,
-    );
+    let h = || {
+        handler(
+            transport.clone(),
+            extra.clone(),
+            &cache_params,
+            &permissioning_params,
+            &upstream_params,
+        )
+    };
     let server1 = transports::ws::start(ws_params, h()).unwrap();
     let _server2 = transports::http::start(http_params, h()).unwrap();
     let _server3 = transports::tcp::start(tcp_params, h()).unwrap();
     let _server4 = transports::ipc::start(ipc_params, h()).unwrap();
-    
+
     server1.wait().unwrap();
 }
