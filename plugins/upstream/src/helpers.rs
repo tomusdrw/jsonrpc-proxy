@@ -43,9 +43,7 @@ pub fn peek_subscription_id(bytes: &[u8]) -> Option<pubsub::SubscriptionId> {
 /// TODO [ToDr] The implementation should deserialize only result part,
 /// not the entire `rpc::Success`
 pub fn peek_result(bytes: &[u8]) -> Option<rpc::Value> {
-    serde_json::from_slice::<rpc::Success>(bytes)
-        .ok()
-        .map(|res| res.result)
+    serde_json::from_slice::<rpc::Success>(bytes).ok().map(|res| res.result)
 }
 
 /// Attempt to peek the id of a call.
@@ -81,11 +79,12 @@ pub fn get_unsubscribe_id(call: &rpc::Call) -> Option<pubsub::SubscriptionId> {
     match *call {
         rpc::Call::MethodCall(rpc::MethodCall { ref params, .. })
         | rpc::Call::Notification(rpc::Notification { ref params, .. }) => match params {
-            rpc::Params::Array(ref vec) if !vec.is_empty() => {
-                pubsub::SubscriptionId::parse_value(&vec[0])
-            }
+            rpc::Params::Array(ref vec) if !vec.is_empty() => pubsub::SubscriptionId::parse_value(&vec[0]),
             _ => {
-                warn!("Invalid unsubscribe params: {:?}. Perhaps it's not really an unsubscribe call?", call);
+                warn!(
+                    "Invalid unsubscribe params: {:?}. Perhaps it's not really an unsubscribe call?",
+                    call
+                );
                 None
             }
         },

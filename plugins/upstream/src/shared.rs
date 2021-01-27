@@ -61,11 +61,7 @@ impl Shared {
     /// Adds a new request to the list of pending requests
     ///
     /// We are awaiting the response for those requests.
-    pub fn add_pending(
-        &self,
-        id: Option<&rpc::Id>,
-        kind: PendingKind,
-    ) -> Option<oneshot::Receiver<String>> {
+    pub fn add_pending(&self, id: Option<&rpc::Id>, kind: PendingKind) -> Option<oneshot::Receiver<String>> {
         if let Some(id) = id {
             let (tx, rx) = oneshot::channel();
             self.pending.lock().insert(id.clone(), (tx, kind));
@@ -94,9 +90,7 @@ impl Shared {
         session.on_drop(move || unsubscribe(id2));
 
         trace!("Registered subscription id {:?}", id);
-        self.subscriptions
-            .write()
-            .insert(id, Arc::downgrade(&session));
+        self.subscriptions.write().insert(id, Arc::downgrade(&session));
     }
 
     /// Removes a subscription.
@@ -106,11 +100,7 @@ impl Shared {
     }
 
     /// Forwards a notification to given subscription.
-    pub fn notify_subscription(
-        &self,
-        id: &pubsub::SubscriptionId,
-        msg: String,
-    ) -> Option<Result<(), String>> {
+    pub fn notify_subscription(&self, id: &pubsub::SubscriptionId, msg: String) -> Option<Result<(), String>> {
         if let Some(session) = self.subscriptions.read().get(&id) {
             if let Some(session) = session.upgrade() {
                 return Some(

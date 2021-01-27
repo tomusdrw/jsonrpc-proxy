@@ -33,9 +33,7 @@ pub fn params() -> Vec<cli_params::Param<Param>> {
         "Address of the parent WebSockets RPC server that we should connect to.",
         "ws://127.0.0.1:9944",
         move |val: String| {
-            let url = val
-                .parse()
-                .map_err(|e| format!("Invalid upstream address: {:?}", e))?;
+            let url = val.parse().map_err(|e| format!("Invalid upstream address: {:?}", e))?;
             Ok(Param::Url(url))
         },
     )]

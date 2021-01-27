@@ -78,10 +78,9 @@ where
     S::Future: Unpin,
     S::CallFuture: Unpin,
 {
-    let mut builder =
-        tcp::ServerBuilder::with_meta_extractor(io, |context: &tcp::RequestContext| {
-            Some(Arc::new(pubsub::Session::new(context.sender.clone()))).into()
-        });
+    let mut builder = tcp::ServerBuilder::with_meta_extractor(io, |context: &tcp::RequestContext| {
+        Some(Arc::new(pubsub::Session::new(context.sender.clone()))).into()
+    });
     // should be overwritten by parameters anyway
     let mut address = "127.0.0.1:9955".parse().unwrap();
     // configure the server

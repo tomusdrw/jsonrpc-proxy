@@ -40,43 +40,29 @@ where
     S::CallFuture: Unpin,
 {
     vec![
-        param(
-            "port",
-            "9934",
-            "Configures HTTP server listening port.",
-            |value| {
-                let port: u16 = value
-                    .parse()
-                    .map_err(|e| format!("Invalid port number {}: {}", value, e))?;
-                Ok(move |address: &mut SocketAddr, builder| {
-                    address.set_port(port);
-                    Ok(builder)
-                })
-            },
-        ),
-        param(
-            "ip",
-            "127.0.0.1",
-            "Configures HTTP server interface.",
-            |value| {
-                let ip: Ipv4Addr = value
-                    .parse()
-                    .map_err(|e| format!("Invalid port number {}: {}", value, e))?;
-                Ok(move |address: &mut SocketAddr, builder| {
-                    address.set_ip(ip.into());
-                    Ok(builder)
-                })
-            },
-        ),
+        param("port", "9934", "Configures HTTP server listening port.", |value| {
+            let port: u16 = value
+                .parse()
+                .map_err(|e| format!("Invalid port number {}: {}", value, e))?;
+            Ok(move |address: &mut SocketAddr, builder| {
+                address.set_port(port);
+                Ok(builder)
+            })
+        }),
+        param("ip", "127.0.0.1", "Configures HTTP server interface.", |value| {
+            let ip: Ipv4Addr = value
+                .parse()
+                .map_err(|e| format!("Invalid port number {}: {}", value, e))?;
+            Ok(move |address: &mut SocketAddr, builder| {
+                address.set_ip(ip.into());
+                Ok(builder)
+            })
+        }),
         param("threads", "4", "Configures HTTP server threads.", |value| {
             let threads: usize = value
                 .parse()
                 .map_err(|e| format!("Invalid threads number {}: {}", value, e))?;
-            Ok(
-                move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
-                    Ok(builder.threads(threads))
-                },
-            )
+            Ok(move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| Ok(builder.threads(threads)))
         }),
         param(
             "rest-api",
@@ -96,11 +82,7 @@ Possible options: "unsecure", "secure", "disabled"."#,
                     "unsecure" => http::RestApi::Unsecure,
                     _ => return Err(format!("Invalid value for rest-api: {}", value)),
                 };
-                Ok(
-                    move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
-                        Ok(builder.rest_api(api))
-                    },
-                )
+                Ok(move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| Ok(builder.rest_api(api)))
             },
         ),
         param(
@@ -117,11 +99,9 @@ options: "all", "none"."#,
                     "*" | "all" | "any" => None,
                     _ => Some(value.split(',').map(Into::into).collect()),
                 };
-                Ok(
-                    move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
-                        Ok(builder.allowed_hosts(hosts.clone().into()))
-                    },
-                )
+                Ok(move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
+                    Ok(builder.allowed_hosts(hosts.clone().into()))
+                })
             },
         ),
         param(
@@ -137,11 +117,9 @@ Special options: "all", "null", "none"."#,
                     _ => Some(value.split(',').map(Into::into).collect()),
                 };
 
-                Ok(
-                    move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
-                        Ok(builder.cors(cors.clone().into()))
-                    },
-                )
+                Ok(move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
+                    Ok(builder.cors(cors.clone().into()))
+                })
             },
         ),
         param(
@@ -154,15 +132,9 @@ Informs the client that the preflight request is not required for the specified 
                     .parse()
                     .map_err(|e| format!("Invalid cors max age {}: {}", value, e))?;
 
-                Ok(
-                    move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
-                        Ok(builder.cors_max_age(if cors_max_age == 0 {
-                            None
-                        } else {
-                            Some(cors_max_age)
-                        }))
-                    },
-                )
+                Ok(move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
+                    Ok(builder.cors_max_age(if cors_max_age == 0 { None } else { Some(cors_max_age) }))
+                })
             },
         ),
         param(
@@ -173,11 +145,9 @@ Informs the client that the preflight request is not required for the specified 
                 let max_payload: usize = value
                     .parse()
                     .map_err(|e| format!("Invalid maximal payload size ({}): {}", value, e))?;
-                Ok(
-                    move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
-                        Ok(builder.max_request_body_size(max_payload * 1024 * 1024))
-                    },
-                )
+                Ok(move |_address: &mut SocketAddr, builder: http::ServerBuilder<M, S>| {
+                    Ok(builder.max_request_body_size(max_payload * 1024 * 1024))
+                })
             },
         ),
     ]

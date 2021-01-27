@@ -129,16 +129,11 @@ impl generic_proxy::Extension for Extension {
         cli::configure_app(app, &self.params)
     }
 
-    fn parse_matches(
-        matches: &clap::ArgMatches,
-        upstream: impl upstream::Transport,
-    ) -> Self::Middleware {
+    fn parse_matches(matches: &clap::ArgMatches, upstream: impl upstream::Transport) -> Self::Middleware {
         use jsonrpc_core::futures::{FutureExt, TryFutureExt};
         let all_params = accounts::config::params();
 
-        let params = cli::parse_matches(matches, &all_params)
-            .ok()
-            .unwrap_or_else(Vec::new);
+        let params = cli::parse_matches(matches, &all_params).ok().unwrap_or_else(Vec::new);
         let call = move |call: jsonrpc_core::Call| {
             Box::new(
                 upstream

@@ -61,10 +61,7 @@ pub trait Extension {
     fn configure_app<'a, 'b>(&'a mut self, app: clap::App<'a, 'b>) -> clap::App<'a, 'b>;
 
     /// Parse matches and create the middleware.
-    fn parse_matches(
-        matches: &clap::ArgMatches,
-        upstream: impl upstream::Transport,
-    ) -> Self::Middleware;
+    fn parse_matches(matches: &clap::ArgMatches, upstream: impl upstream::Transport) -> Self::Middleware;
 }
 
 impl Extension for () {
@@ -74,10 +71,7 @@ impl Extension for () {
         app
     }
 
-    fn parse_matches(
-        _matches: &clap::ArgMatches,
-        _upstream: impl upstream::Transport,
-    ) -> Self::Middleware {
+    fn parse_matches(_matches: &clap::ArgMatches, _upstream: impl upstream::Transport) -> Self::Middleware {
         Default::default()
     }
 }
@@ -131,9 +125,7 @@ pub fn run_app<E: Extension>(
     let permissioning_params = cli::parse_matches(&matches, &permissioning_params).unwrap();
 
     // Actually run the damn thing.
-    let transport =
-        ws_upstream::WebSocket::new(ws_upstream_params, |fut| std::mem::drop(tokio::spawn(fut)))
-            .unwrap();
+    let transport = ws_upstream::WebSocket::new(ws_upstream_params, |fut| std::mem::drop(tokio::spawn(fut))).unwrap();
 
     let extra = E::parse_matches(&matches, transport.clone());
     let h = || {

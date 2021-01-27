@@ -146,23 +146,12 @@ impl<'a> rlp::Encodable for SignedTransaction<'a> {
 }
 
 impl<'a> SignedTransaction<'a> {
-    pub fn new(
-        transaction: Cow<'a, Transaction>,
-        chain_id: u64,
-        v: u8,
-        r: [u8; 32],
-        s: [u8; 32],
-    ) -> Self {
+    pub fn new(transaction: Cow<'a, Transaction>, chain_id: u64, v: u8, r: [u8; 32], s: [u8; 32]) -> Self {
         let v = replay_protection::add(v, chain_id);
         let r = U256::from_big_endian(&r);
         let s = U256::from_big_endian(&s);
 
-        Self {
-            transaction,
-            v,
-            r,
-            s,
-        }
+        Self { transaction, v, r, s }
     }
 
     pub fn standard_v(&self) -> u8 {

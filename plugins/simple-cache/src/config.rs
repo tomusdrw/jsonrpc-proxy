@@ -30,24 +30,23 @@ pub enum Param {
 
 /// Returns a list of supported configuration parameters.
 pub fn params() -> Vec<cli_params::Param<Param>> {
-    vec![
-        cli_params::Param::new(
-            "Simple Cache",
-            "simple-cache-config",
-            "A path to a JSON file containing a list of methods that should be cached. See examples for the file schema.",
-            "-",
-            |path: String| {
-                if &path == "-" {
-                    return Ok(Param::Config(Default::default()))
-                }
-
-                let file = fs::File::open(&path).map_err(|e| format!("Can't open cache file at {}: {:?}", path, e))?;
-                let buf_file = io::BufReader::new(file);
-                let methods: Cache = serde_json::from_reader(buf_file).map_err(|e| format!("Invalid JSON at {}: {:?}", path, e))?;
-                Ok(Param::Config(methods))
+    vec![cli_params::Param::new(
+        "Simple Cache",
+        "simple-cache-config",
+        "A path to a JSON file containing a list of methods that should be cached. See examples for the file schema.",
+        "-",
+        |path: String| {
+            if &path == "-" {
+                return Ok(Param::Config(Default::default()));
             }
-        )
-    ]
+
+            let file = fs::File::open(&path).map_err(|e| format!("Can't open cache file at {}: {:?}", path, e))?;
+            let buf_file = io::BufReader::new(file);
+            let methods: Cache =
+                serde_json::from_reader(buf_file).map_err(|e| format!("Invalid JSON at {}: {:?}", path, e))?;
+            Ok(Param::Config(methods))
+        },
+    )]
 }
 
 /// Add methods given as the first parameter to the config in one of the params.
@@ -84,7 +83,6 @@ mod tests {
 
     #[test]
     fn should_deserialize_example() {
-        let _m: Cache =
-            serde_json::from_slice(include_bytes!("../../../examples/cache.json")).unwrap();
+        let _m: Cache = serde_json::from_slice(include_bytes!("../../../examples/cache.json")).unwrap();
     }
 }

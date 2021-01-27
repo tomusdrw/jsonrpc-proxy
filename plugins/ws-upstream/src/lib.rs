@@ -42,10 +42,7 @@ struct WebSocketHandler {
 }
 
 impl WebSocketHandler {
-    pub fn process_message(
-        &self,
-        message: OwnedMessage,
-    ) -> impl Future<Output = Result<(), String>> {
+    pub fn process_message(&self, message: OwnedMessage) -> impl Future<Output = Result<(), String>> {
         future::ready(match message {
             OwnedMessage::Close(e) => self
                 .write_sender
@@ -58,12 +55,10 @@ impl WebSocketHandler {
             OwnedMessage::Text(t) => {
                 // First check if it's a notification for a subscription
                 if let Some(id) = helpers::peek_subscription_id(t.as_bytes()) {
-                    return future::ready(self.shared.notify_subscription(&id, t).unwrap_or_else(
-                        || {
-                            log::warn!("Got notification for unknown subscription (id: {:?})", id);
-                            Ok(())
-                        },
-                    ));
+                    return future::ready(self.shared.notify_subscription(&id, t).unwrap_or_else(|| {
+                        log::warn!("Got notification for unknown subscription (id: {:?})", id);
+                        Ok(())
+                    }));
                 }
 
                 // then check if it's one of the pending calls
@@ -78,11 +73,7 @@ impl WebSocketHandler {
                                     .as_ref()
                                     .and_then(jsonrpc_pubsub::SubscriptionId::parse_value);
                                 if let Some(subscription_id) = subscription_id {
-                                    self.shared.add_subscription(
-                                        subscription_id,
-                                        session,
-                                        unsubscribe,
-                                    );
+                                    self.shared.add_subscription(subscription_id, session, unsubscribe);
                                 }
                             }
                         }
@@ -141,10 +132,7 @@ impl std::fmt::Debug for WebSocket {
 
 impl WebSocket {
     /// Create new WebSocket transport within existing Event Loop.
-    pub fn new(
-        params: Vec<config::Param>,
-        spawn_tasks: impl Spawn + 'static,
-    ) -> Result<Self, String> {
+    pub fn new(params: Vec<config::Param>, spawn_tasks: impl Spawn + 'static) -> Result<Self, String> {
         let mut url = "ws://127.0.0.1:9944".parse().expect("Valid address given.");
 
         for p in params {
@@ -161,8 +149,7 @@ impl WebSocket {
         let shared = Arc::new(Shared::default());
 
         let ws_future = {
-            use futures::compat::Future01CompatExt;
-            use futures::TryStreamExt;
+            use futures::{compat::Future01CompatExt, TryStreamExt};
             use futures01::{Future, Sink, Stream};
 
             let handler = WebSocketHandler {
@@ -182,12 +169,10 @@ impl WebSocket {
                 .map(|(duplex, _)| duplex.split())
                 .map_err(|e| format!("{:?}", e))
                 .and_then(move |(sink, stream)| {
-                    let reader = stream
-                        .map_err(|e| format!("{:?}", e))
-                        .for_each(move |message| {
-                            log::trace!("Message received: {:?}", message);
-                            handler.process_message(message).compat()
-                        });
+                    let reader = stream.map_err(|e| format!("{:?}", e)).for_each(move |message| {
+                        log::trace!("Message received: {:?}", message);
+                        handler.process_message(message).compat()
+                    });
 
                     let writer = sink
                         .send_all(write_receiver)
@@ -242,8 +227,7 @@ impl WebSocket {
 // we disconnect from the upstream as well and all the subscriptions are dropped automatically.
 impl upstream::Transport for WebSocket {
     type Error = String;
-    type Future =
-        Box<dyn Future<Output = Result<Option<jsonrpc_core::Output>, Self::Error>> + Send + Unpin>;
+    type Future = Box<dyn Future<Output = Result<Option<jsonrpc_core::Output>, Self::Error>> + Send + Unpin>;
 
     fn send(&self, call: jsonrpc_core::Call) -> Self::Future {
         log::trace!("Calling: {:?}", call);
@@ -266,9 +250,7 @@ impl upstream::Transport for WebSocket {
         let session = match session {
             Some(session) => session,
             None => {
-                return Box::new(futures::future::err(
-                    "Called subscribe without session.".into(),
-                ));
+                return Box::new(futures::future::err("Called subscribe without session.".into()));
             }
         };
 

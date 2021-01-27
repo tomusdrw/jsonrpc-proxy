@@ -66,10 +66,9 @@ where
     S::Future: Unpin,
     S::CallFuture: Unpin,
 {
-    let mut builder =
-        ipc::ServerBuilder::with_meta_extractor(io, |context: &ipc::RequestContext| {
-            Some(Arc::new(pubsub::Session::new(context.sender.clone()))).into()
-        });
+    let mut builder = ipc::ServerBuilder::with_meta_extractor(io, |context: &ipc::RequestContext| {
+        Some(Arc::new(pubsub::Session::new(context.sender.clone()))).into()
+    });
     // should be overwritten by parameters anyway
     let mut path = "./jsonrpc.ipc".to_owned();
     // configure the server
@@ -89,11 +88,7 @@ where
     S: rpc::Middleware<M>,
 {
     /// Configure the server.
-    fn configure(
-        &self,
-        path: &mut String,
-        builder: ipc::ServerBuilder<M, S>,
-    ) -> io::Result<ipc::ServerBuilder<M, S>>;
+    fn configure(&self, path: &mut String, builder: ipc::ServerBuilder<M, S>) -> io::Result<ipc::ServerBuilder<M, S>>;
 }
 
 impl<F, M, S> Configurator<M, S> for F
@@ -102,11 +97,7 @@ where
     M: rpc::Metadata,
     S: rpc::Middleware<M>,
 {
-    fn configure(
-        &self,
-        path: &mut String,
-        builder: ipc::ServerBuilder<M, S>,
-    ) -> io::Result<ipc::ServerBuilder<M, S>> {
+    fn configure(&self, path: &mut String, builder: ipc::ServerBuilder<M, S>) -> io::Result<ipc::ServerBuilder<M, S>> {
         (*self)(path, builder)
     }
 }

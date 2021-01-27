@@ -36,7 +36,7 @@ extern crate log;
 
 use std::{collections::HashMap, sync::Arc};
 
-use rpc::{futures::future::Either, futures::Future};
+use rpc::futures::{future::Either, Future};
 
 pub mod config;
 pub mod helpers;
@@ -104,10 +104,7 @@ impl<T> Middleware<T> {
                 .iter()
                 .map(|s| (s.subscribe.clone(), s.clone()))
                 .collect(),
-            unsubscribe_methods: pubsub_methods
-                .into_iter()
-                .map(|s| (s.unsubscribe.clone(), s))
-                .collect(),
+            unsubscribe_methods: pubsub_methods.into_iter().map(|s| (s.unsubscribe.clone(), s)).collect(),
         }
     }
 }

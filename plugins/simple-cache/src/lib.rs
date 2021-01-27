@@ -35,9 +35,9 @@ extern crate serde_derive;
 
 use fnv::FnvHashMap;
 use parking_lot::RwLock;
-use rpc::{
-    futures::future::{self, Either},
-    futures::Future,
+use rpc::futures::{
+    future::{self, Either},
+    Future,
 };
 use std::{
     hash::{Hash as HashTrait, Hasher},
@@ -88,8 +88,7 @@ impl Method {
     fn hash(&self, parameters: &rpc::Params) -> Hash {
         let mut hasher = twox_hash::XxHash::default();
         self.name.hash(&mut hasher);
-        serde_json::to_writer(HashWriter(&mut hasher), parameters)
-            .expect("HashWriter never fails.");
+        serde_json::to_writer(HashWriter(&mut hasher), parameters).expect("HashWriter never fails.");
         hasher.finish()
     }
 
@@ -133,11 +132,7 @@ impl Middleware {
 
         Middleware {
             enabled: cache.enabled,
-            cacheable: cache
-                .methods
-                .into_iter()
-                .map(|x| (x.name.clone(), x))
-                .collect(),
+            cacheable: cache.methods.into_iter().map(|x| (x.name.clone(), x)).collect(),
             cached: Default::default(),
         }
     }
@@ -145,8 +140,7 @@ impl Middleware {
 
 impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     type Future = rpc::middleware::NoopFuture;
-    type CallFuture =
-        Either<rpc::middleware::NoopCallFuture, rpc::futures::future::Ready<Option<rpc::Output>>>;
+    type CallFuture = Either<rpc::middleware::NoopCallFuture, rpc::futures::future::Ready<Option<rpc::Output>>>;
 
     fn on_call<F, X>(&self, call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X>
     where
@@ -167,9 +161,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
 
         let action = match call {
             rpc::Call::MethodCall(rpc::MethodCall {
-                ref method,
-                ref params,
-                ..
+                ref method, ref params, ..
             }) => {
                 if let Some(method) = self.cacheable.get(method) {
                     let hash = method.hash(params);
@@ -195,12 +187,10 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             // TODO [ToDr] Prevent multiple requests being made.
             Action::NextAndCache(hash, method_meta) => {
                 let cached = self.cached.clone();
-                Either::Left(Either::Left(Box::pin(next(call, meta).map(
-                    move |result| {
-                        cached.write().insert(hash, (result.clone(), method_meta));
-                        result
-                    },
-                ))))
+                Either::Left(Either::Left(Box::pin(next(call, meta).map(move |result| {
+                    cached.write().insert(hash, (result.clone(), method_meta));
+                    result
+                }))))
             }
             Action::Return(result) => Either::Left(Either::Right(future::ready(result))),
         }
@@ -279,12 +269,8 @@ mod tests {
         let (next, called) = callback();
 
         // when
-        let res1 = middleware
-            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
-            .wait();
-        let res2 = middleware
-            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
-            .wait();
+        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 2);
@@ -305,12 +291,8 @@ mod tests {
         let (next, called) = callback();
 
         // when
-        let res1 = middleware
-            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
-            .wait();
-        let res2 = middleware
-            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
-            .wait();
+        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 1);
@@ -357,16 +339,10 @@ mod tests {
         let (next, called) = callback();
 
         // when
-        let res1 = middleware
-            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
-            .wait();
-        let res2 = middleware
-            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
-            .wait();
+        let res1 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
+        let res2 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
         ::std::thread::sleep(time::Duration::from_millis(2));
-        let res3 = middleware
-            .on_call(method_call("eth_getBlock", "xyz"), (), &next)
-            .wait();
+        let res3 = middleware.on_call(method_call("eth_getBlock", "xyz"), (), &next).wait();
 
         // then
         assert_eq!(called.load(atomic::Ordering::SeqCst), 2);

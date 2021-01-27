@@ -58,13 +58,7 @@ pub struct Param<Exec> {
 
 impl<X> Param<X> {
     /// Create new parameter definition.
-    pub fn new<A, B, C, D, E>(
-        category: A,
-        name: B,
-        description: C,
-        default_value: D,
-        parser: E,
-    ) -> Self
+    pub fn new<A, B, C, D, E>(category: A, name: B, description: C, default_value: D, parser: E) -> Self
     where
         A: Into<String>,
         B: Into<String>,

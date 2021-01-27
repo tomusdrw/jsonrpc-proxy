@@ -26,18 +26,20 @@ use ethereum_transaction::{Bytes, SignTransaction, SignedTransaction, Transactio
 use ethsign::{KeyFile, Protected, SecretKey};
 use jsonrpc_core::{
     self as rpc,
-    futures::future::{self, Either},
-    futures::{channel::oneshot, Future},
+    futures::{
+        channel::oneshot,
+        future::{self, Either},
+        Future,
+    },
 };
-use std::sync::atomic::{self, AtomicUsize};
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{
+    atomic::{self, AtomicUsize},
+    Arc, Mutex,
+};
 
 pub mod config;
 
-type Upstream = Box<
-    dyn Fn(rpc::Call) -> Box<dyn Future<Output = Option<rpc::Output>> + Send + Unpin> + Send + Sync,
->;
+type Upstream = Box<dyn Fn(rpc::Call) -> Box<dyn Future<Output = Option<rpc::Output>> + Send + Unpin> + Send + Sync>;
 
 /// A middleware intercepting transaction requests and signing them locally.
 #[derive(Clone)]
@@ -82,8 +84,7 @@ const PROOF: &str = "Output always produced for `MethodCall`";
 
 impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
     type Future = rpc::middleware::NoopFuture;
-    type CallFuture =
-        Either<rpc::middleware::NoopCallFuture, rpc::futures::future::Ready<Option<rpc::Output>>>;
+    type CallFuture = Either<rpc::middleware::NoopCallFuture, rpc::futures::future::Ready<Option<rpc::Output>>>;
 
     fn on_call<F, X>(&self, mut call: rpc::Call, meta: M, next: F) -> Either<Self::CallFuture, X>
     where
@@ -116,9 +117,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
                 (*jsonrpc, orig_id)
             }
             // prepend signing account to the accounts list.
-            rpc::Call::MethodCall(rpc::MethodCall { ref mut method, .. })
-                if method == "eth_accounts" =>
-            {
+            rpc::Call::MethodCall(rpc::MethodCall { ref mut method, .. }) if method == "eth_accounts" => {
                 let res = next(call, meta).map(|mut output| {
                     if let Some(rpc::Output::Success(ref mut s)) = output {
                         let rpc::Success { ref mut result, .. } = s;
@@ -204,11 +203,7 @@ impl<M: rpc::Metadata> rpc::Middleware<M> for Middleware {
             let address = public.address();
             let from = request.from;
             if from.as_bytes() != address {
-                log::error!(
-                    "Expected to send from {:?}, but only support {:?}",
-                    from,
-                    address
-                );
+                log::error!("Expected to send from {:?}, but only support {:?}", from, address);
                 return err(id, "Invalid `from` address");
             }
             // Calculate unsigned hash

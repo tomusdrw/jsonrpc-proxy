@@ -41,11 +41,11 @@ pub fn params() -> Vec<cli_params::Param<Param>> {
                 return Ok(Param::PubSubMethods(Default::default()));
             }
 
-            let file = fs::File::open(&path)
-                .map_err(|e| format!("Can't open upstream config file at {}: {:?}", path, e))?;
+            let file =
+                fs::File::open(&path).map_err(|e| format!("Can't open upstream config file at {}: {:?}", path, e))?;
             let buf_file = io::BufReader::new(file);
-            let config: Upstream = serde_json::from_reader(buf_file)
-                .map_err(|e| format!("Invalid JSON at {}: {:?}", path, e))?;
+            let config: Upstream =
+                serde_json::from_reader(buf_file).map_err(|e| format!("Invalid JSON at {}: {:?}", path, e))?;
             Ok(Param::PubSubMethods(config.pubsub_methods))
         },
     )]
@@ -74,7 +74,6 @@ mod tests {
 
     #[test]
     fn should_deserialize_example_configuration() {
-        let _m: Upstream =
-            serde_json::from_slice(include_bytes!("../../../examples/upstream.json")).unwrap();
+        let _m: Upstream = serde_json::from_slice(include_bytes!("../../../examples/upstream.json")).unwrap();
     }
 }

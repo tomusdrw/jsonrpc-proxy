@@ -31,7 +31,7 @@ extern crate serde_json;
 extern crate serde_derive;
 
 use fnv::FnvHashMap;
-use rpc::{futures::future::Either, futures::Future};
+use rpc::futures::{future::Either, Future};
 
 pub mod config;
 
@@ -98,11 +98,7 @@ impl Middleware {
 
         Middleware {
             base: config.policy,
-            permissioned: config
-                .methods
-                .into_iter()
-                .map(|x| (x.name.clone(), x))
-                .collect(),
+            permissioned: config.methods.into_iter().map(|x| (x.name.clone(), x)).collect(),
         }
     }
 }

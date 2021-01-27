@@ -53,20 +53,15 @@ where
                 })
             },
         ),
-        param(
-            "ip",
-            "127.0.0.1",
-            "Configures WebSockets server interface.",
-            |value| {
-                let ip: Ipv4Addr = value
-                    .parse()
-                    .map_err(|e| format!("Invalid port number {}: {}", value, e))?;
-                Ok(move |address: &mut SocketAddr, builder| {
-                    address.set_ip(ip.into());
-                    Ok(builder)
-                })
-            },
-        ),
+        param("ip", "127.0.0.1", "Configures WebSockets server interface.", |value| {
+            let ip: Ipv4Addr = value
+                .parse()
+                .map_err(|e| format!("Invalid port number {}: {}", value, e))?;
+            Ok(move |address: &mut SocketAddr, builder| {
+                address.set_ip(ip.into());
+                Ok(builder)
+            })
+        }),
         param(
             "hosts",
             "none",
@@ -81,11 +76,9 @@ options: "all", "none"."#,
                     "*" | "all" | "any" => None,
                     _ => Some(value.split(',').map(Into::into).collect()),
                 };
-                Ok(
-                    move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
-                        Ok(builder.allowed_hosts(hosts.clone().into()))
-                    },
-                )
+                Ok(move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
+                    Ok(builder.allowed_hosts(hosts.clone().into()))
+                })
             },
         ),
         param(
@@ -101,11 +94,9 @@ options: "all", "none". "#,
                     _ => Some(value.split(',').map(Into::into).collect()),
                 };
 
-                Ok(
-                    move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
-                        Ok(builder.allowed_origins(origins.clone().into()))
-                    },
-                )
+                Ok(move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
+                    Ok(builder.allowed_origins(origins.clone().into()))
+                })
             },
         ),
         param(
@@ -116,11 +107,9 @@ options: "all", "none". "#,
                 let max_connections: usize = value
                     .parse()
                     .map_err(|e| format!("Invalid number of connections {}: {}", value, e))?;
-                Ok(
-                    move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
-                        Ok(builder.max_connections(max_connections))
-                    },
-                )
+                Ok(move |_address: &mut SocketAddr, builder: ws::ServerBuilder<M, S>| {
+                    Ok(builder.max_connections(max_connections))
+                })
             },
         ),
     ]
