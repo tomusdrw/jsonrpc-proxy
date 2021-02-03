@@ -21,7 +21,7 @@ use impl_serde::serialize as bytes;
 use rlp::RlpStream;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use tiny_keccak::{Keccak, Hasher};
+use tiny_keccak::{Hasher, Keccak};
 
 pub use ethereum_types::{Address, U256};
 
