@@ -7,7 +7,7 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 cli-params = { path = "../../../proxy/cli-params" }
-ethsign = "0.7"
+ethsign = "0.8"
 ethereum-transaction = { path = "./transaction" }
 jsonrpc-core = "16.0"
 log = "0.4"
