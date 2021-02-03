@@ -21,7 +21,7 @@ use impl_serde::serialize as bytes;
 use rlp::RlpStream;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use tiny_keccak::keccak256 as keccak;
+use tiny_keccak::{Hasher, Keccak};
 
 pub use ethereum_types::{Address, U256};
 
@@ -168,7 +168,13 @@ impl<'a> SignedTransaction<'a> {
     }
 
     pub fn hash(&self) -> [u8; 32] {
-        self.with_rlp(|s| keccak(s.as_raw()))
+        self.with_rlp(|s| {
+            let mut output = [0_u8; 32];
+            let mut k = Keccak::v256();
+            k.update(s.as_raw());
+            k.finalize(&mut output);
+            output
+        })
     }
 
     pub fn bare_hash(&self) -> [u8; 32] {
@@ -182,7 +188,7 @@ impl<'a> SignedTransaction<'a> {
     }
 
     pub fn to_rlp(&self) -> Vec<u8> {
-        self.with_rlp(|s| s.drain())
+        self.with_rlp(|s| s.out().to_vec())
     }
 
     fn with_rlp<R>(&self, f: impl FnOnce(RlpStream) -> R) -> R {

@@ -10,4 +10,5 @@ members = [
   "proxy/cli-params",
   "proxy/transports",
   "substrate-proxy",
+  "ethereum-proxy/plugins/accounts/transaction"
 ]

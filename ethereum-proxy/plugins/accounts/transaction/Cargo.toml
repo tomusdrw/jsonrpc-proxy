@@ -2,15 +2,15 @@
 name = "ethereum-transaction"
 description = "A set of primitives to compose ethereum transactions."
 repository = "https://github.com/tomusdrw/jsonrpc-proxy"
-version = "0.4.0"
+version = "0.6.0"
 authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
 
 [dependencies]
-ethereum-types = "0.9"
-impl-serde = { version = "0.1" }
+ethereum-types = "0.11"
+impl-serde = { version = "0.3" }
 log = "0.4"
-rlp = "0.4"
+rlp = "0.5"
 serde = { version = "1.0", features = ["derive"] }
-tiny-keccak = "1.5"
+tiny-keccak = "2.0"
