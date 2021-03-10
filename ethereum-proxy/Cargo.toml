@@ -14,5 +14,5 @@ jsonrpc-core = "16.0"
 log = "0.4"
 rpc-proxy = { path = "../generic-proxy" }
 simple-cache = { path = "../plugins/simple-cache" }
-tokio = { version = "1.2", features = ["macros"] }
+tokio = { version = "1.3", features = ["macros"] }
 upstream = { path = "../plugins/upstream" }
