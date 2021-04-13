@@ -9,7 +9,7 @@ cli-params = { path = "../cli-params" }
 # TODO [ToDr] feature-gate transports.
 jsonrpc-core = "16.0"
 jsonrpc-http-server = "16.0"
-jsonrpc-ipc-server = "16.0"
+jsonrpc-ipc-server = "17.0"
 jsonrpc-pubsub = "17.0"
 jsonrpc-tcp-server = "16.0"
 jsonrpc-ws-server = "16.0"
