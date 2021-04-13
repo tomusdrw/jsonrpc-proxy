@@ -446,7 +446,7 @@ dependencies = [
  "cli",
  "cli-params",
  "ethereum-proxy-accounts",
- "jsonrpc-core 16.0.0",
+ "jsonrpc-core 17.0.0",
  "log 0.4.14",
  "rpc-proxy",
  "simple-cache",
@@ -1436,7 +1436,7 @@ version = "0.1.0"
 dependencies = [
  "cli-params",
  "fnv",
- "jsonrpc-core 16.0.0",
+ "jsonrpc-core 17.0.0",
  "log 0.4.14",
  "serde",
  "serde_derive",
@@ -1778,7 +1778,7 @@ dependencies = [
  "clap",
  "cli",
  "env_logger",
- "jsonrpc-core 16.0.0",
+ "jsonrpc-core 17.0.0",
  "jsonrpc-pubsub",
  "permissioning",
  "simple-cache",
@@ -1950,7 +1950,7 @@ version = "0.1.0"
 dependencies = [
  "cli-params",
  "fnv",
- "jsonrpc-core 16.0.0",
+ "jsonrpc-core 17.0.0",
  "parking_lot 0.11.1",
  "serde",
  "serde_derive",
@@ -2346,7 +2346,7 @@ name = "transports"
 version = "0.1.0"
 dependencies = [
  "cli-params",
- "jsonrpc-core 16.0.0",
+ "jsonrpc-core 17.0.0",
  "jsonrpc-http-server",
  "jsonrpc-ipc-server",
  "jsonrpc-pubsub",
@@ -2450,7 +2450,7 @@ version = "0.1.0"
 dependencies = [
  "cli-params",
  "fnv",
- "jsonrpc-core 16.0.0",
+ "jsonrpc-core 17.0.0",
  "jsonrpc-pubsub",
  "log 0.4.14",
  "parking_lot 0.11.1",
@@ -2620,7 +2620,7 @@ version = "0.1.0"
 dependencies = [
  "cli-params",
  "futures 0.1.29",
- "jsonrpc-core 16.0.0",
+ "jsonrpc-core 17.0.0",
  "jsonrpc-pubsub",
  "log 0.4.14",
  "serde_json",

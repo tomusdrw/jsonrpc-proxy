@@ -9,7 +9,7 @@ edition = "2018"
 clap = { version = "2.33", features = ["yaml"] }
 cli = { path = "../proxy/cli" }
 env_logger = "0.8"
-jsonrpc-core = "16.0"
+jsonrpc-core = "17.0"
 jsonrpc-pubsub = "17.0"
 tokio = { version = "1.5", features = ["full"] }
 permissioning = { path = "../plugins/permissioning" }
