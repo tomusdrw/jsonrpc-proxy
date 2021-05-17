@@ -450,7 +450,7 @@ dependencies = [
  "log 0.4.14",
  "rpc-proxy",
  "simple-cache",
- "tokio 1.5.0",
+ "tokio 1.6.0",
  "upstream",
 ]
 
@@ -1071,9 +1071,9 @@ checksum = "b294d6fa9ee409a054354afc4352b0b9ef7ca222c69b8812cbea9e7d2bf3783f"
 
 [[package]]
 name = "libc"
-version = "0.2.71"
+version = "0.2.94"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9457b06509d27052635f90d6466700c65095fdf75409b3fbdd903e988b886f49"
+checksum = "18794a8ad5b29321f790b55d93dfba91e125cb1a9edbd4f8e3150acc771c1a5e"
 
 [[package]]
 name = "lock_api"
@@ -1782,7 +1782,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "permissioning",
  "simple-cache",
- "tokio 1.5.0",
+ "tokio 1.6.0",
  "transports",
  "upstream",
  "ws-upstream",
@@ -2015,7 +2015,7 @@ dependencies = [
  "clap",
  "rpc-proxy",
  "simple-cache",
- "tokio 1.5.0",
+ "tokio 1.6.0",
  "upstream",
 ]
 
@@ -2115,9 +2115,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.5.0"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83f0c8e7c0addab50b663055baf787d0af7f413a46e6e7fb9559a4e4db7137a5"
+checksum = "bd3076b5c8cc18138b8f8814895c11eb4de37114a5d127bafdc5e55798ceef37"
 dependencies = [
  "autocfg 1.0.1",
  "bytes 1.0.0",
