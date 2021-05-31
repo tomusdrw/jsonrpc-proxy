@@ -450,7 +450,7 @@ dependencies = [
  "log 0.4.14",
  "rpc-proxy",
  "simple-cache",
- "tokio 1.6.0",
+ "tokio 1.6.1",
  "upstream",
 ]
 
@@ -1782,7 +1782,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "permissioning",
  "simple-cache",
- "tokio 1.6.0",
+ "tokio 1.6.1",
  "transports",
  "upstream",
  "ws-upstream",
@@ -2015,7 +2015,7 @@ dependencies = [
  "clap",
  "rpc-proxy",
  "simple-cache",
- "tokio 1.6.0",
+ "tokio 1.6.1",
  "upstream",
 ]
 
@@ -2115,9 +2115,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.6.0"
+version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd3076b5c8cc18138b8f8814895c11eb4de37114a5d127bafdc5e55798ceef37"
+checksum = "0a38d31d7831c6ed7aad00aa4c12d9375fd225a6dd77da1d25b707346319a975"
 dependencies = [
  "autocfg 1.0.1",
  "bytes 1.0.0",
