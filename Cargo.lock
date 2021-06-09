@@ -227,6 +227,12 @@ dependencies = [
 
 [[package]]
 name = "bytes"
+version = "0.5.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e4cec68f03f32e44924783795810fa50a7035d8c8ebe78580ad7e6c703fba38"
+
+[[package]]
+name = "bytes"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ad1f8e949d755f9d79112b5bb46938e0ef9d3804a0b16dfab13aafcaa5f0fa72"
@@ -957,7 +963,7 @@ dependencies = [
  "futures 0.3.8",
  "hyper 0.12.35",
  "jsonrpc-core 16.0.0",
- "jsonrpc-server-utils",
+ "jsonrpc-server-utils 16.0.0",
  "log 0.4.14",
  "net2",
  "parking_lot 0.11.1",
@@ -973,7 +979,7 @@ dependencies = [
  "futures 0.1.29",
  "futures 0.3.8",
  "jsonrpc-core 16.0.0",
- "jsonrpc-server-utils",
+ "jsonrpc-server-utils 16.0.0",
  "log 0.4.14",
  "parity-tokio-ipc",
  "parking_lot 0.11.1",
@@ -1013,18 +1019,33 @@ dependencies = [
 ]
 
 [[package]]
-name = "jsonrpc-tcp-server"
-version = "16.0.0"
+name = "jsonrpc-server-utils"
+version = "17.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe2b0ac94d02924ca68c6839a336a2ed59ede0566e591c69fe5f37e414e7d802"
+checksum = "bce68fa279a2822b3619369cd024f8a4f8e5ce485468834f8679a3c7919aae2d"
 dependencies = [
- "futures 0.1.29",
+ "bytes 0.5.6",
  "futures 0.3.8",
- "jsonrpc-core 16.0.0",
- "jsonrpc-server-utils",
+ "globset",
+ "jsonrpc-core 17.1.0",
+ "lazy_static",
+ "log 0.4.14",
+ "tokio 0.2.24",
+ "tokio-util",
+ "unicase 2.5.1",
+]
+
+[[package]]
+name = "jsonrpc-tcp-server"
+version = "17.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "567e1f8ae9677c900a76f77a1f37bf48c22fab32c011c456ef167ad372458b04"
+dependencies = [
+ "jsonrpc-core 17.1.0",
+ "jsonrpc-server-utils 17.1.0",
  "log 0.4.14",
  "parking_lot 0.11.1",
- "tokio-service",
+ "tower-service",
 ]
 
 [[package]]
@@ -1036,7 +1057,7 @@ dependencies = [
  "futures 0.1.29",
  "futures 0.3.8",
  "jsonrpc-core 16.0.0",
- "jsonrpc-server-utils",
+ "jsonrpc-server-utils 16.0.0",
  "log 0.4.14",
  "parity-ws",
  "parking_lot 0.11.1",
@@ -1145,10 +1166,11 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.6.19"
+version = "0.6.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83f51996a3ed004ef184e16818edc51fadffe8e7ca68be67f9dee67d84d0ff23"
+checksum = "fce347092656428bc8eaf6201042cb551b8d67855af7374542a92a0fbfcac430"
 dependencies = [
+ "cfg-if 0.1.10",
  "fuchsia-zircon",
  "fuchsia-zircon-sys",
  "iovec",
@@ -1182,7 +1204,7 @@ checksum = "46e73a04c2fa6250b8d802134d56d554a9ec2922bf977777c805ea5def61ce40"
 dependencies = [
  "lazycell",
  "log 0.4.14",
- "mio 0.6.19",
+ "mio 0.6.22",
  "slab",
 ]
 
@@ -1193,7 +1215,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f5e374eff525ce1c5b7687c4cef63943e7686524a387933ad27ca7ec43779cb3"
 dependencies = [
  "log 0.4.14",
- "mio 0.6.19",
+ "mio 0.6.22",
  "miow 0.3.6",
  "winapi 0.3.8",
 ]
@@ -1206,7 +1228,7 @@ checksum = "966257a94e196b11bb43aca423754d87429960a768de9414f3691d6957abf125"
 dependencies = [
  "iovec",
  "libc",
- "mio 0.6.19",
+ "mio 0.6.22",
 ]
 
 [[package]]
@@ -1345,7 +1367,7 @@ dependencies = [
  "bytes 0.4.12",
  "httparse",
  "log 0.4.14",
- "mio 0.6.19",
+ "mio 0.6.22",
  "mio-extras",
  "rand 0.7.2",
  "sha-1",
@@ -1464,6 +1486,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "pin-project-lite"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "257b64915a082f7811703966789728173279bdebb956b143dbcd23f6f970a777"
 
 [[package]]
 name = "pin-project-lite"
@@ -2099,7 +2127,7 @@ checksum = "5a09c0b5bb588872ab2f09afa13ee6e9dac11e10a0ec9e8e3ba39a5a5d530af6"
 dependencies = [
  "bytes 0.4.12",
  "futures 0.1.29",
- "mio 0.6.19",
+ "mio 0.6.22",
  "num_cpus",
  "tokio-codec",
  "tokio-current-thread",
@@ -2117,6 +2145,23 @@ dependencies = [
 
 [[package]]
 name = "tokio"
+version = "0.2.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "099837d3464c16a808060bb3f02263b412f6fafcb5d01c533d309985fbeebe48"
+dependencies = [
+ "bytes 0.5.6",
+ "futures-core",
+ "iovec",
+ "lazy_static",
+ "memchr",
+ "mio 0.6.22",
+ "num_cpus",
+ "pin-project-lite 0.1.12",
+ "slab",
+]
+
+[[package]]
+name = "tokio"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a38d31d7831c6ed7aad00aa4c12d9375fd225a6dd77da1d25b707346319a975"
@@ -2129,7 +2174,7 @@ dependencies = [
  "num_cpus",
  "once_cell",
  "parking_lot 0.11.1",
- "pin-project-lite",
+ "pin-project-lite 0.2.1",
  "signal-hook-registry",
  "tokio-macros",
  "winapi 0.3.8",
@@ -2218,7 +2263,7 @@ checksum = "9d282d483052288b2308ba5ee795f5673b159c9bdf63c385a05609da782a5eae"
 dependencies = [
  "bytes 0.4.12",
  "futures 0.1.29",
- "mio 0.6.19",
+ "mio 0.6.22",
  "mio-named-pipes",
  "tokio 0.1.22",
 ]
@@ -2233,7 +2278,7 @@ dependencies = [
  "futures 0.1.29",
  "lazy_static",
  "log 0.4.14",
- "mio 0.6.19",
+ "mio 0.6.22",
  "num_cpus",
  "parking_lot 0.9.0",
  "slab",
@@ -2270,7 +2315,7 @@ dependencies = [
  "bytes 0.4.12",
  "futures 0.1.29",
  "iovec",
- "mio 0.6.19",
+ "mio 0.6.22",
  "tokio-io",
  "tokio-reactor",
 ]
@@ -2313,7 +2358,7 @@ dependencies = [
  "bytes 0.4.12",
  "futures 0.1.29",
  "log 0.4.14",
- "mio 0.6.19",
+ "mio 0.6.22",
  "tokio-codec",
  "tokio-io",
  "tokio-reactor",
@@ -2330,12 +2375,32 @@ dependencies = [
  "iovec",
  "libc",
  "log 0.4.14",
- "mio 0.6.19",
+ "mio 0.6.22",
  "mio-uds",
  "tokio-codec",
  "tokio-io",
  "tokio-reactor",
 ]
+
+[[package]]
+name = "tokio-util"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be8242891f2b6cbef26a2d7e8605133c2c554cd35b3e4948ea892d6d68436499"
+dependencies = [
+ "bytes 0.5.6",
+ "futures-core",
+ "futures-sink",
+ "log 0.4.14",
+ "pin-project-lite 0.1.12",
+ "tokio 0.2.24",
+]
+
+[[package]]
+name = "tower-service"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "360dfd1d6d30e05fda32ace2c8c70e9c0a9da713275777f5a4dbb8a1893930c6"
 
 [[package]]
 name = "traitobject"
