@@ -8,7 +8,7 @@ edition = "2018"
 [dependencies]
 clap = { version = "2.33", features = ["yaml"] }
 cli = { path = "../proxy/cli" }
-env_logger = "0.8"
+env_logger = "0.9"
 jsonrpc-core = "16.0"
 jsonrpc-pubsub = "17.1"
 tokio = { version = "1.6", features = ["full"] }
