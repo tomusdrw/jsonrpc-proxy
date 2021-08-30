@@ -951,7 +951,7 @@ dependencies = [
  "futures 0.3.8",
  "hyper 0.12.35",
  "jsonrpc-core 16.0.0",
- "jsonrpc-server-utils",
+ "jsonrpc-server-utils 16.0.0",
  "log 0.4.14",
  "net2",
  "parking_lot 0.11.2",
@@ -967,7 +967,7 @@ dependencies = [
  "futures 0.1.29",
  "futures 0.3.8",
  "jsonrpc-core 16.0.0",
- "jsonrpc-server-utils",
+ "jsonrpc-server-utils 16.0.0",
  "log 0.4.14",
  "parity-tokio-ipc",
  "parking_lot 0.11.2",
@@ -1007,6 +1007,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsonrpc-server-utils"
+version = "18.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa4fdea130485b572c39a460d50888beb00afb3e35de23ccd7fad8ff19f0e0d4"
+dependencies = [
+ "bytes 1.0.0",
+ "futures 0.3.8",
+ "globset",
+ "jsonrpc-core 18.0.0",
+ "lazy_static",
+ "log 0.4.14",
+ "tokio 1.10.1",
+ "tokio-stream",
+ "tokio-util",
+ "unicase 2.5.1",
+]
+
+[[package]]
 name = "jsonrpc-tcp-server"
 version = "16.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1015,7 +1033,7 @@ dependencies = [
  "futures 0.1.29",
  "futures 0.3.8",
  "jsonrpc-core 16.0.0",
- "jsonrpc-server-utils",
+ "jsonrpc-server-utils 16.0.0",
  "log 0.4.14",
  "parking_lot 0.11.2",
  "tokio-service",
@@ -1023,14 +1041,13 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-ws-server"
-version = "16.0.0"
+version = "18.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb39207d2e6487b8bb11c5f88db5386d864735ee42fe0102ff7032b6fb907d75"
+checksum = "f892c7d766369475ab7b0669f417906302d7c0fb521285c0a0c92e52e7c8e946"
 dependencies = [
- "futures 0.1.29",
  "futures 0.3.8",
- "jsonrpc-core 16.0.0",
- "jsonrpc-server-utils",
+ "jsonrpc-core 18.0.0",
+ "jsonrpc-server-utils 18.0.0",
  "log 0.4.14",
  "parity-ws",
  "parking_lot 0.11.2",
@@ -1331,9 +1348,9 @@ dependencies = [
 
 [[package]]
 name = "parity-ws"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e02a625dd75084c2a7024f07c575b61b782f729d18702dabb3cdbf31911dc61"
+checksum = "d0ab8a461779bd022964cae2b4989fa9c99deb270bec162da2125ec03c09fcaa"
 dependencies = [
  "byteorder",
  "bytes 0.4.12",
@@ -2254,6 +2271,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-stream"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b2f3f698253f03119ac0102beaa64f67a67e08074d03a22d18784104543727f"
+dependencies = [
+ "futures-core",
+ "pin-project-lite",
+ "tokio 1.10.1",
+]
+
+[[package]]
 name = "tokio-sync"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2337,6 +2365,20 @@ dependencies = [
  "tokio-codec",
  "tokio-io",
  "tokio-reactor",
+]
+
+[[package]]
+name = "tokio-util"
+version = "0.6.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1caa0b0c8d94a049db56b5acf8cba99dc0623aab1b26d5b5f5e2d945846b3592"
+dependencies = [
+ "bytes 1.0.0",
+ "futures-core",
+ "futures-sink",
+ "log 0.4.14",
+ "pin-project-lite",
+ "tokio 1.10.1",
 ]
 
 [[package]]
