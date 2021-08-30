@@ -928,9 +928,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-core"
-version = "17.1.0"
+version = "18.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4467ab6dfa369b69e52bd0692e480c4d117410538526a57a304a0f2250fd95e"
+checksum = "14f7f76aef2d054868398427f6c54943cf3d1caa9a7ec7d0c38d69df97a965eb"
 dependencies = [
  "futures 0.3.8",
  "futures-executor",
@@ -976,12 +976,12 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-pubsub"
-version = "17.1.0"
+version = "18.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14739e5523a40739882cc34a44ab2dd9356bce5ce102513f5984a9efbe342f3d"
+checksum = "240f87695e6c6f62fb37f05c02c04953cf68d6408b8c1c89de85c7a0125b1011"
 dependencies = [
  "futures 0.3.8",
- "jsonrpc-core 17.1.0",
+ "jsonrpc-core 18.0.0",
  "lazy_static",
  "log 0.4.14",
  "parking_lot 0.11.2",

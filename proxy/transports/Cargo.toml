@@ -10,7 +10,7 @@ cli-params = { path = "../cli-params" }
 jsonrpc-core = "16.0"
 jsonrpc-http-server = "16.0"
 jsonrpc-ipc-server = "16.0"
-jsonrpc-pubsub = "17.1"
+jsonrpc-pubsub = "18.0"
 jsonrpc-tcp-server = "16.0"
 jsonrpc-ws-server = "16.0"
 log = "0.4"
