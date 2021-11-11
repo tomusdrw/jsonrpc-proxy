@@ -10,7 +10,7 @@ clap = { version = "2.33", features = ["yaml"] }
 cli = { path = "../proxy/cli" }
 cli-params = { path = "../proxy/cli-params" }
 ethereum-proxy-accounts = { path = "./plugins/accounts" }
-jsonrpc-core = "16.0"
+jsonrpc-core = "18.0"
 log = "0.4"
 rpc-proxy = { path = "../generic-proxy" }
 simple-cache = { path = "../plugins/simple-cache" }
