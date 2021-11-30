@@ -5,5 +5,5 @@ authors = ["Tomasz Drwięga <tomusdrw@gmail.com>"]
 license = "GPL-3.0-or-later"
 
 [dependencies]
-clap = "2.33"
+clap = "2.34"
 cli-params = { path = "../cli-params" }
