@@ -1,5 +1,8 @@
 jsonrpc-proxy
 =================================
+# Status
+
+This library has not been updated in a while and is here just for archive purposes. You might consider looking at https://github.com/AcalaNetwork/subway which is supposed to serve the same purpose and is way more recent.
 
 # Overview
 
